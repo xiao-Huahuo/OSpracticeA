@@ -1,0 +1,17 @@
+{
+ "id": "T07",
+ "origin": "teacher",
+ "layer": "boot",
+ "type": "order",
+ "root_cause": "start() 的 M→S 清单顺序颠倒:PMP 授权晚于 mret 触发的首次 S 态取指",
+ "symptom": "mret 后零输出黑屏;-d int 首行 cause=1(instruction access fault)",
+ "detection": "-d int 看 fault 发生特权级与 PC;核对 start() 清单顺序",
+ "difficulty": 3,
+ "variant_params": {
+  "swap_with_delegation": [
+   0,
+   1
+  ]
+ },
+ "fixed_by_teachers": true
+}

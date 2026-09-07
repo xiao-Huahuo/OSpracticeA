@@ -1,0 +1,17 @@
+{
+ "id": "T12",
+ "origin": "teacher",
+ "layer": "syscall",
+ "type": "order",
+ "root_cause": "系统调用处理中先修改内核状态、后做参数校验,失败路径无回滚",
+ "symptom": "非法参数调用后内核计数器/表项残留脏状态,后续调用行为异常",
+ "detection": "对同一非法参数连续调用两次比对状态;审查校验与修改的先后",
+ "difficulty": 4,
+ "variant_params": {
+  "swap_steps": [
+   0,
+   1
+  ]
+ },
+ "fixed_by_teachers": true
+}

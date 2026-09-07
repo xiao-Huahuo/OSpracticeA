@@ -1,0 +1,107 @@
+{
+ "gifts": [
+  {
+   "src": "ref:kernel/trampoline.S",
+   "dst": "kernel/trampoline.S",
+   "reason": "ABI 协议的另一半(汇编,注释即协议文档)"
+  },
+  {
+   "src": "ref:user/usys.pl",
+   "dst": "user/usys.pl",
+   "reason": "系统调用桩生成器(非教学目标)"
+  },
+  {
+   "src": "ref:user/user.h",
+   "dst": "user/user.h",
+   "reason": "用户态 API 声明(接口规范)"
+  },
+  {
+   "src": "ref:user/ulib.c",
+   "dst": "user/ulib.c",
+   "whitelist": true,
+   "reason": "用户态库(非教学目标)"
+  },
+  {
+   "src": "ref:user/printf.c",
+   "dst": "user/printf.c",
+   "whitelist": true,
+   "reason": "用户态 printf(非教学目标)"
+  },
+  {
+   "src": "gifts:lab2/sh.c",
+   "dst": "user/sh.c",
+   "reason": "最小 shell(课程自制)"
+  },
+  {
+   "src": "gifts:lab2/hi.c",
+   "dst": "user/hi.c",
+   "reason": "冒烟程序"
+  },
+  {
+   "src": "gifts:lab2/spin.c",
+   "dst": "user/spin.c",
+   "reason": "忙循环演示程序"
+  },
+  {
+   "src": "gifts:lab2/user.ld",
+   "dst": "user/user.ld",
+   "reason": "用户程序链接脚本(基址 0)"
+  },
+  {
+   "src": "gifts:lab2/Makefile.upgrade",
+   "dst": "Makefile.upgrade",
+   "reason": "构建升级件(用户程序内嵌方案)"
+  },
+  {
+   "src": "ref:kernel/syscall.h",
+   "dst": "kernel/syscall.h",
+   "reason": "系统调用号表(ABI 规范)"
+  },
+  {
+   "src": "ref:kernel/stat.h",
+   "dst": "kernel/stat.h",
+   "reason": "用户库依赖的 ABI 头"
+  },
+  {
+   "src": "ref:kernel/fcntl.h",
+   "dst": "kernel/fcntl.h",
+   "reason": "用户库依赖的 ABI 头"
+  },
+  {
+   "src": "ref:kernel/vm.h",
+   "dst": "kernel/vm.h",
+   "reason": "用户库依赖的 ABI 头(2026 快照)"
+  },
+  {
+   "src": "ref:kernel/param.h",
+   "dst": "kernel/param.h",
+   "reason": "ABI 头(常量约定)"
+  },
+  {
+   "src": "gifts:lab2/tests/badecall.c",
+   "dst": "tests/badecall.c",
+   "whitelist": true,
+   "reason": "官方测试:非法 ecall 返回 -1"
+  },
+  {
+   "src": "gifts:lab2/tests/bufstorm.c",
+   "dst": "tests/bufstorm.c",
+   "whitelist": true,
+   "reason": "官方测试:输入缓冲边界(行/字符流通用)"
+  },
+  {
+   "src": "gifts:lab2/tests/README-tests.md",
+   "dst": "tests/README-tests.md",
+   "whitelist": true,
+   "reason": "测试用法与判据"
+  }
+ ],
+ "support": [
+  {
+   "src": "gifts:lab2/support/inject_uart.py",
+   "dst": "inject_uart.py",
+   "reason": "串口灌入脚本(测试与验收共用)"
+  }
+ ],
+ "todo": []
+}

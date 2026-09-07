@@ -1,0 +1,17 @@
+{
+ "id": "T08",
+ "origin": "teacher",
+ "layer": "boot",
+ "type": "semantic",
+ "root_cause": "mtvec 写入未 4 字节对齐,QEMU 静默丢弃整次写入",
+ "symptom": "任何异常跳到地址 0;或 trap 后行为诡异且无固定复现路径",
+ "detection": "反汇编核对向量标号地址低 2 位;检查 .balign 4",
+ "difficulty": 2,
+ "variant_params": {
+  "misalign_label": [
+   0,
+   1
+  ]
+ },
+ "fixed_by_teachers": true
+}

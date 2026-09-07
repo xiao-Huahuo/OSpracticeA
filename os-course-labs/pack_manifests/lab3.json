@@ -1,0 +1,34 @@
+{
+ "gifts": [
+  {
+   "src": "gifts:lab3/dump_pagetable-ABI.md",
+   "dst": "dump_pagetable-ABI.md",
+   "reason": "页表 dump 观测规范(格式模板)"
+  },
+  {
+   "src": "gifts:lab3/tests/badaccess.c",
+   "dst": "tests/badaccess.c",
+   "whitelist": true,
+   "reason": "官方测试:越界/守卫页被杀"
+  },
+  {
+   "src": "gifts:lab3/tests/memcap.c",
+   "dst": "tests/memcap.c",
+   "whitelist": true,
+   "reason": "官方测试:内存上限与 OOM 语义"
+  },
+  {
+   "src": "gifts:lab3/tests/README-tests.md",
+   "dst": "tests/README-tests.md",
+   "whitelist": true,
+   "reason": "测试用法与判据"
+  },
+  {
+   "src": "gifts:lab3/dump-callpoint.md",
+   "dst": "dump-callpoint-ABI.md",
+   "reason": "dump 挂载点/重放/回归接线示例附录"
+  }
+ ],
+ "support": [],
+ "todo": []
+}

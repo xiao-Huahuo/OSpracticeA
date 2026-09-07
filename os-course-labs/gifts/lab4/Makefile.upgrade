@@ -1,0 +1,18 @@
+# 预置构建配置 —— lab4 Makefile 升级集成片段(policy_tests 接入片段; 规则请勿修改)
+#
+# 用途:把 support/ 下的调度策略测试程序并入内嵌构建链。
+# 合并方式:
+#   1) 先把 support/{common.h,bench.c,lottery_test.c,stride_test.c}
+#      拷入 user/(git mv 或 cp,保持包内版本);
+#   2) 把下面规则并入 Makefile(你的 Makefile 此时应已含 lab2 的
+#      UPROGS/userimg 规则链——本片段只做"追加");
+#   3) kernel/syscall.h、user/user.h、user/usys.pl 以本包 gifts/ 版本
+#      为准(新增 SYS_schedstat=23,见《能力目标与接口约定》§2.5)。
+#
+# 测试程序的输出规范(autograder 抓取):
+#   bench:        "RESULT avg_ctx_switch = <n>"
+#   lottery_test: "RESULT lottery_ratio = <a>:<b>"(两进程获得 CPU 比例)
+#   stride_test:  "RESULT stride_ratio = <a>:<b>"
+#   全部以 "PASS:" 行收尾表示断言通过。
+
+UPROGS += bench lottery_test stride_test

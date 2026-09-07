@@ -1,0 +1,26 @@
+# 预置构建配置 —— lab6 Makefile 升级集成片段(磁盘与文件系统集成; 规则请勿修改)
+#
+# 前置:你的 Makefile 已含 lab2 的内嵌程序链(user-flat/*.bin)。
+# 本片段做三件事:构建 mkfs(宿主机工具)、制作 fs.img、把日志块数
+# 按你的 LAB6_LOG_BLOCKS 注入 mkfs。
+#
+# 合并方式:全部规则并入你的 Makefile;`make fsimg` 生成磁盘镜像;
+# `make qemu` 的运行参数加 `-drive file=fs.img,if=none,format=raw,id=x0`
+# 与 `-device virtio-blk-device,drive=x0`(或按你 virtio_disk.c 注释)。
+#
+# 注:mkfs 是宿主机工具(环境工具,非教学目标);LAB6_LOG_BLOCKS 经
+# 独立宏 LAB6_LOG_BLOCKS 注入,不与 kernel/param.h 的 LOGBLOCKS 冲突。
+
+HOSTCC = cc
+
+mkfs/mkfs: mkfs/mkfs.c kernel/fs.h kernel/param.h kernel/types.h kernel/stat.h
+	$(HOSTCC) -Wno-unknown-attributes -DLAB6_LOG_BLOCKS=$(LAB6_LOG_BLOCKS) \
+	    -I. -o mkfs/mkfs mkfs/mkfs.c
+
+fs.img: mkfs/mkfs $(addprefix user-flat/,$(UPROGS:=.bin))
+	./mkfs/mkfs fs.img $(addprefix user-flat/,$(UPROGS:=.bin))
+
+fsimg: fs.img
+
+clean-extra6:
+	rm -f mkfs/mkfs fs.img

@@ -1,0 +1,59 @@
+{
+ "gifts": [
+  {
+   "src": "ref:kernel/swtch.S",
+   "dst": "kernel/swtch.S",
+   "reason": "上下文切换底层汇编(实现 14 个 callee-saved 寄存器保存恢复)"
+  },
+  {
+   "src": "gifts:lab4/user/user.h",
+   "dst": "user/user.h",
+   "reason": "用户态 API(+schedstat 声明,以包内版本为准)"
+  },
+  {
+   "src": "gifts:lab4/user/usys.pl",
+   "dst": "user/usys.pl",
+   "reason": "系统调用桩生成器(+SYS_schedstat=23)"
+  },
+  {
+   "src": "gifts:lab4/kernel/syscall.h",
+   "dst": "kernel/syscall.h",
+   "reason": "调用号表(+SYS_schedstat=23)"
+  },
+  {
+   "src": "gifts:lab4/Makefile.upgrade",
+   "dst": "Makefile.upgrade",
+   "reason": "policy_tests 内嵌接入片段(UPROGS 追加+输出规范)"
+  },
+  {
+   "src": "gifts:lab4/support/common.c",
+   "dst": "common.c",
+   "whitelist": true,
+   "reason": "采样簿记框架(cpu_of/delta_cpu/child_loop/burn_forever)"
+  }
+ ],
+ "support": [
+  {
+   "src": "gifts:lab4/support/schedstat.patch",
+   "dst": "schedstat.patch",
+   "reason": "schedstat 观测格式参照(ABI)"
+  },
+  {
+   "src": "gifts:lab4/support/bench.c",
+   "dst": "bench.c"
+  },
+  {
+   "src": "gifts:lab4/support/common.h",
+   "dst": "common.h"
+  },
+  {
+   "src": "gifts:lab4/support/lottery_test.c",
+   "dst": "lottery_test.c"
+  },
+  {
+   "src": "gifts:lab4/support/stride_test.c",
+   "dst": "stride_test.c"
+  }
+ ],
+ "todo": []
+}

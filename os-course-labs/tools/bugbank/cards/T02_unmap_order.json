@@ -1,0 +1,6 @@
+{"id": "T02", "origin": "teacher", "layer": "memory", "type": "order",
+ "root_cause": "uvmunmap 先 kfree 后清 PTE,失败回滚重入时 double free",
+ "symptom": "回滚/压力测试概率性 panic,踩页数据互相污染",
+ "detection": "kfree 计数差分定位重复 pa;检查 uvmunmap 两步顺序",
+ "difficulty": 3, "variant_params": {"amplify_rounds": [200, 800]},
+ "fixed_by_teachers": true}

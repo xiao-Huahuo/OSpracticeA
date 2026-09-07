@@ -1,0 +1,28 @@
+# kernel_patch/schedstat.patch — 观测系统调用规格(手动应用的补丁说明)
+#
+# 学生按本规格自行实现 schedstat 系统调用即可,无需真正打补丁。
+# 语义(ABI,测试程序依赖此契约):
+#   int schedstat(int pid, int *cpu_ticks, int *last_slice_ticks);
+#   返回 0 成功;-1 参数错误或目标进程不存在。
+#     pid              — 目标进程;-1 表示查询自身(须为存活进程,父子均可,
+#                        供测试框架在子进程存活期采样;已退出进程返回 -1)
+#     cpu_ticks        — 目标进程自创建以来累计获得的 CPU tick 数
+#     last_slice_ticks — 目标进程最近一次连续运行的时间片长度(tick),
+#                        被调度器分发时清零重新累计
+#
+# --- kernel/proc.h: struct proc 内新增 ---
+#   int cpu_ticks;            // 累计 CPU tick
+#   int last_slice_ticks;     // 本次连续运行 tick,分发时清零
+#
+# --- kernel/proc.c: scheduler() 选中进程后(执行 swtch 前)---
+#   p->last_slice_ticks = 0;
+#
+# --- kernel/proc.c: usertrap() 时钟中断分支(决定让出前)---
+#   p->cpu_ticks++;
+#   p->last_slice_ticks++;
+#
+# --- kernel/sysproc.c: sys_schedstat ---
+#   取参数 pid 与两个用户指针(经 copyout,lab3 之后的合法路径);
+#   查进程表(持 p->lock),把两个计数写回用户指针。
+#
+# --- 用户侧:user.h 声明 int schedstat(int, int*, int*); ---

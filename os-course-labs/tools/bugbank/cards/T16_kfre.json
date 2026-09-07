@@ -1,0 +1,17 @@
+{
+ "id": "T16",
+ "origin": "teacher",
+ "layer": "memory",
+ "type": "consistency",
+ "root_cause": "kfree 后未将页清零,新分配页残留旧数据",
+ "symptom": "新进程读到前一进程残留内容(信息泄漏);偶发计算结果错乱",
+ "detection": "kalloc 染色填充 0xaa,新建进程检查首屏内容",
+ "difficulty": 2,
+ "variant_params": {
+  "skip_zero": [
+   0,
+   1
+  ]
+ },
+ "fixed_by_teachers": true
+}

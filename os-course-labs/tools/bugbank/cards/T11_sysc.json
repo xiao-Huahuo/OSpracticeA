@@ -1,0 +1,17 @@
+{
+ "id": "T11",
+ "origin": "teacher",
+ "layer": "syscall",
+ "type": "consistency",
+ "root_cause": "syscall 返回值寄存器复用错误:结果写错 a0 保存位置,返回前被覆盖",
+ "symptom": "系统调用返回值随机或恒为旧值,应用层判断分支错乱",
+ "detection": "单步跟踪 syscall 返回路径与 trapframe->a0 写入点",
+ "difficulty": 2,
+ "variant_params": {
+  "wrong_field": [
+   0,
+   1
+  ]
+ },
+ "fixed_by_teachers": true
+}

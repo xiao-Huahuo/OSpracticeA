@@ -1,0 +1,17 @@
+{
+ "id": "T18",
+ "origin": "teacher",
+ "layer": "fs",
+ "type": "order",
+ "root_cause": "脏块淘汰时先复用 buffer 后写回磁盘,断电窗口内元数据丢失",
+ "symptom": "断电重启后文件大小与块位图不一致;ls 可见幽灵文件",
+ "detection": "高水位写压测+随机 crash_at;审查 brelse/evict 的写回顺序",
+ "difficulty": 4,
+ "variant_params": {
+  "swap": [
+   0,
+   1
+  ]
+ },
+ "fixed_by_teachers": true
+}

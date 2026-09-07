@@ -1,0 +1,52 @@
+{
+ "gifts": [
+  {
+   "src": "ref:kernel/virtio_disk.c",
+   "dst": "kernel/virtio_disk.c",
+   "whitelist": true,
+   "reason": "环境事实:virtio 设备驱动协议(v2 起从不作为教学目标)"
+  },
+  {
+   "src": "ref:mkfs/mkfs.c",
+   "dst": "mkfs/mkfs.c",
+   "whitelist": true,
+   "reason": "磁盘镜像制作器(环境工具;磁盘布局即约定)"
+  },
+  {
+   "src": "gifts:lab6/Makefile.upgrade",
+   "dst": "Makefile.upgrade",
+   "reason": "mkfs 构建/fs.img 制作/LAB6_LOG_BLOCKS 注入规则"
+  },
+  {
+   "src": "gifts:lab6/mkfs/mkfs.c",
+   "dst": "mkfs/mkfs.c",
+   "reason": "镜像制作器(已参数化 LAB6_LOG_BLOCKS,独立宏名)"
+  },
+  {
+   "src": "gifts:lab6/kernel/virtio-deps.md",
+   "dst": "virtio-deps.md",
+   "reason": "virtio 依赖集定稿(buf 最小字段集/调用面/上下文假设)"
+  },
+  {
+   "src": "gifts:lab6/tests/fsstress.c",
+   "dst": "tests/fsstress.c",
+   "whitelist": true,
+   "reason": "官方测试:并发读写+link/unlink 一致性"
+  },
+  {
+   "src": "gifts:lab6/tests/crashmap.md",
+   "dst": "tests/crashmap.md",
+   "reason": "崩溃表模板(受控断电恢复判据)"
+  }
+ ],
+ "support": [
+  {
+   "src": "gifts:lab6/support/crash.c",
+   "dst": "crash.c",
+   "reason": "受控断电驱动(完整提供,含 crash_at(stage))"
+  }
+ ],
+ "todo": [
+  "冲击测试复核:mkfs/virtio 定稿参数在真实累积树上复核(第 10 周前,不阻塞开学)"
+ ]
+}

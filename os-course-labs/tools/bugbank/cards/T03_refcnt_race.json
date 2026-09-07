@@ -1,0 +1,6 @@
+{"id": "T03", "origin": "student-history", "layer": "memory", "type": "race",
+ "root_cause": "COW 引用计数非原子 RMW,丢失并发 decref 后计数虚高,提前释放",
+ "symptom": "fork+写风暴 <1% 概率迟发 double free,崩溃点远离案发",
+ "detection": "崩溃页计数打印 vs 实际映射者数;放大参数复现",
+ "difficulty": 5, "variant_params": {"storm_procs": [20, 80], "amplify": [10, 60]},
+ "fixed_by_teachers": true}

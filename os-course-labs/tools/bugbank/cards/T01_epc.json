@@ -1,0 +1,6 @@
+{"id": "T01", "origin": "teacher", "layer": "trap", "type": "semantic",
+ "root_cause": "syscall 返回路径 epc 未前移,同一条 ecall 无限重入",
+ "symptom": "任何系统调用程序卡死;gdb 可见 usertrap 反复进入且 sepc 不变",
+ "detection": "gdb 断 usertrap 计数 / 观察 sepc 与触发指令关系",
+ "difficulty": 2, "variant_params": {"misplace_branch": [0, 1]},
+ "fixed_by_teachers": true}

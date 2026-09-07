@@ -1,0 +1,39 @@
+{
+ "gifts": [
+  {
+   "src": "gifts:lab5/user/user.h",
+   "dst": "user/user.h",
+   "reason": "用户态 API(+pmc 声明,含 lab4 累积,以包内版本为准)"
+  },
+  {
+   "src": "gifts:lab5/user/usys.pl",
+   "dst": "user/usys.pl",
+   "reason": "系统调用桩生成器(+SYS_pmc=26)"
+  },
+  {
+   "src": "gifts:lab5/kernel/syscall.h",
+   "dst": "kernel/syscall.h",
+   "reason": "调用号表(+SYS_pmc=26)"
+  },
+  {
+   "src": "gifts:lab5/tests/zerocopy.c",
+   "dst": "tests/zerocopy.c",
+   "whitelist": true,
+   "reason": "官方测试:fork 立即 exec 零复制断言"
+  },
+  {
+   "src": "gifts:lab5/tests/cowpair.c",
+   "dst": "tests/cowpair.c",
+   "whitelist": true,
+   "reason": "官方测试:配对写+计数对账"
+  },
+  {
+   "src": "gifts:lab5/tests/README-tests.md",
+   "dst": "tests/README-tests.md",
+   "whitelist": true,
+   "reason": "测试用法与判据"
+  }
+ ],
+ "support": [],
+ "todo": []
+}

@@ -1,0 +1,17 @@
+{
+ "id": "T14",
+ "origin": "teacher",
+ "layer": "sched",
+ "type": "semantic",
+ "root_cause": "时间片处理把 tick 递减放在持自旋锁区间,且超时让出时未重置时间片",
+ "symptom": "进程让出后立刻又被调度,时间片形同虚设;交互进程卡顿",
+ "detection": "观察 yield 频率与 tick 计数;审查 yield 后 state/tick 重置",
+ "difficulty": 3,
+ "variant_params": {
+  "no_reset": [
+   0,
+   1
+  ]
+ },
+ "fixed_by_teachers": true
+}

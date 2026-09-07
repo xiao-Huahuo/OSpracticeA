@@ -1,0 +1,6 @@
+{"id": "T05", "origin": "student-history", "layer": "fs", "type": "consistency",
+ "root_cause": "替换策略选中脏牺牲者后未写回即复用 buf",
+ "symptom": "静默数据陈旧:write→淘汰→read 读回旧值,无崩溃",
+ "detection": "缓存钩子看牺牲者脏位;write-evict-read 黑盒脚本",
+ "difficulty": 3, "variant_params": {"victim_slot": [0, 3]},
+ "fixed_by_teachers": true}

@@ -1,0 +1,17 @@
+{
+ "id": "T09",
+ "origin": "teacher",
+ "layer": "trap",
+ "type": "order",
+ "root_cause": "内核态未把 stvec 从 uservec 切到 kernelvec,内核中断使用用户陷阱向量",
+ "symptom": "内核态中断后 trapframe 被覆盖,随机内存踩踏崩溃",
+ "detection": "审查 usertrap/usertrapret 的 stvec 切换时序",
+ "difficulty": 4,
+ "variant_params": {
+  "swap_order": [
+   0,
+   1
+  ]
+ },
+ "fixed_by_teachers": true
+}

@@ -1,0 +1,17 @@
+{
+ "id": "T17",
+ "origin": "teacher",
+ "layer": "fs",
+ "type": "consistency",
+ "root_cause": "日志提交后 install 阶段断电重放时未清日志区,二次恢复重复 install",
+ "symptom": "二次崩溃后同一事务被重放两次,引用计数/链接数错乱",
+ "detection": "crash_at 连续两次断电恢复;比对 install 前后块指纹",
+ "difficulty": 5,
+ "variant_params": {
+  "stage": [
+   0,
+   1
+  ]
+ },
+ "fixed_by_teachers": true
+}

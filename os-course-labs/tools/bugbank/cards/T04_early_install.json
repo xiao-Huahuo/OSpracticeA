@@ -1,0 +1,6 @@
+{"id": "T04", "origin": "teacher", "layer": "fs", "type": "consistency",
+ "root_cause": "end_op 的 install 移出 outstanding==0 判断,嵌套事务提前誊写",
+ "symptom": "外层日志未写全时断电,重启后元数据半新半旧",
+ "detection": "crash_at 二分事务阶段;对照崩溃表",
+ "difficulty": 4, "variant_params": {"crash_stage": [1, 5]},
+ "fixed_by_teachers": true}

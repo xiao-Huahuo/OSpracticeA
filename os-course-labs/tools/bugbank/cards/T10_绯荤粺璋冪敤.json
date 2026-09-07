@@ -1,0 +1,17 @@
+{
+ "id": "T10",
+ "origin": "teacher",
+ "layer": "syscall",
+ "type": "semantic",
+ "root_cause": "系统调用对用户传入指针未做校验直接解引用(未 copyin/copyout 或未检查边界)",
+ "symptom": "恶意/出错程序传野指针导致内核读越界或写穿内核内存",
+ "detection": "用负数/超 VA 边界指针做 fuzz;审查每个 syscall 的指针来源",
+ "difficulty": 3,
+ "variant_params": {
+  "missing_check": [
+   0,
+   2
+  ]
+ },
+ "fixed_by_teachers": true
+}

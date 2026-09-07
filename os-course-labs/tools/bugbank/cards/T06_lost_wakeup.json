@@ -1,0 +1,6 @@
+{"id": "T06", "origin": "teacher", "layer": "sched", "type": "race",
+ "root_cause": "sleep 的条件检查与置 SLEEPING 不在同一临界区,窗口内 wakeup 丢失",
+ "symptom": "高负载概率性挂起(进程永久 SLEEPING,chan 非零)",
+ "detection": "挂起进程状态打印;consoleintr 临界区审查",
+ "difficulty": 4, "variant_params": {"window_nops": [3, 10], "load": [20, 80]},
+ "fixed_by_teachers": true}
