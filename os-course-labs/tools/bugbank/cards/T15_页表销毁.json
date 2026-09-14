@@ -1,0 +1,17 @@
+{
+ "id": "T15",
+ "origin": "teacher",
+ "layer": "memory",
+ "type": "order",
+ "root_cause": "页表销毁顺序颠倒:先 kfree 物理页后清 PTE,留下悬空映射窗口",
+ "symptom": "进程退出后偶发其他进程数据被踩;free 页再次出现在他人页表",
+ "detection": "审查 uvmunmap/proc_freepagetable 顺序;kalloc 染色观测",
+ "difficulty": 5,
+ "variant_params": {
+  "swap": [
+   0,
+   1
+  ]
+ },
+ "fixed_by_teachers": true
+}

@@ -1,0 +1,5 @@
+{
+  "plantuml.render": "Local",
+  "plantuml.java": "/Applications/PyCharm.app/Contents/jbr/Contents/Home/bin/java",
+  "plantuml.previewAutoUpdate": true
+}

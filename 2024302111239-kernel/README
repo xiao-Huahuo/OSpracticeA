@@ -1,0 +1,110 @@
+lab1 初始代码骨架(自动生成)
+======================
+你所拥有的文件: kernel/kernel.ld(lab1 注释版)、kernel/riscv.h(底层硬件宏定义，完整)、
+               Makefile、kernel/course_sid.h(个性化参数文件，请勿修改)。
+需要你编写的代码: kernel/ 目录下五个核心文件 —— entry.S / start.c / console.c /
+                printf.c / main.c。
+第一步: 仔细阅读《实验说明书(lab1)》第 0 节的代码导读路线，完成设计笔记后再动手编写代码。
+初始预期现象: 骨架代码能够"构建成功"，但会输出一条链接器警告
+(warning: cannot find entry symbol _entry)——此时内核尚未包含具体的启动代码，
+直接运行 make qemu 屏幕无输出。正确编写 entry.S 后该警告将消失。
+
+======================
+推荐 git 工作流(全学期常用基础指令)
+======================
+本课程项目由上一级 OSpracticeA 根仓库统一管理，本目录沿用根仓库的 Git 历史。
+
+  cd ..
+  git add 2024302111239-kernel labs/labN docs/change_history README.md
+  git commit -m "chore: merge labN pack"
+  git tag labN-start                                    # 实验开发前标记起点
+  # 开发期间按完整意图创建若干提交
+  git add 2024302111239-kernel labs/labN docs/change_history README.md
+  git commit -m "feat: complete labN milestone"
+  git tag labN-submit                                   # 验收通过后标记提交点
+  git archive --format=zip -o 提交-labN-2024302111239.zip labN-submit:2024302111239-kernel
+
+推荐做法: 建议创建私有远程仓库(校内代码平台/GitLab/Gitee 等)进行代码备份。
+恢复到实验起点前先提交当前改动，并用 `git status --short` 确认个人内核没有未跟踪文件。随后执行 `git restore --source labN-start --staged --worktree -- 2024302111239-kernel`，将该目录中受 Git 管理的文件恢复到起点版本；忽略的构建产物由目录内的 `make clean` 清理。定位"从哪次提交开始引入缺陷"可使用 git bisect。
+commit 历史虽不作统一打分，但在现场验收进行代码溯源和设计答辩时，是最清晰的自主开发记录佐证。
+
+当前内核目录树
+==============
+
+本目录是学号 2024302111239 的累积内核代码树。目录结构必须随每轮实验同步维护；新增、删除、移动或重命名文件时，在同一次修改中更新本节。
+
+```text
+2024302111239-kernel/
+├── README                    # 当前内核结构、能力和运行方法
+├── Makefile                  # 编译与 QEMU 启动入口
+├── check_expect.py           # 个性化 Banner 格式检查
+├── 我的参数.txt               # 学号派生参数的可读清单
+└── kernel/
+    ├── kernel.ld             # 内核链接地址与段布局，课程预置
+    ├── riscv.h               # RISC-V CSR 与底层指令接口，课程预置
+    ├── memlayout.h           # QEMU virt 物理地址布局，课程预置
+    ├── types.h               # 内核基础类型，课程预置
+    ├── course_sid.h          # 学号派生参数，课程预置
+    ├── entry.S               # 启动入口与内核栈，Lab 1 实现
+    ├── start.c               # M 态初始化与 M 到 S 特权级切换，Lab 1 实现
+    ├── console.c             # UART 字符输出与个性化协议，Lab 1 实现
+    ├── printf.c              # 最小格式化输出，Lab 1 实现
+    └── main.c                # 内核主入口、Banner 与自检，Lab 1 实现
+```
+
+当前能力
+========
+
+个性化基线已经生成。五个 Lab 1 核心文件当前保存课程骨架注释，链接过程已经到达 `_entry` 待实现里程碑。后续 Lab 2 至 Lab 6 将继续在本目录增加陷阱与中断、内存管理、进程调度、COW 和文件系统能力。
+
+当前稳定接口与约定
+==================
+
+- `make` 构建目标生成 `kernel/kernel`。
+- `make qemu` 使用 `-machine virt -bios none -kernel kernel/kernel -nographic` 启动。
+- `kernel/kernel.ld` 固定内核链接基址与段布局。
+- `kernel/riscv.h` 和 `kernel/memlayout.h` 提供 RISC-V CSR 与 QEMU virt 地址约定。
+- `kernel/course_sid.h` 是个性化参数的唯一来源。
+- Lab 1 约定的实现入口为 `_entry`、`start`、`main`、UART 字符输出接口和最小格式化输出接口。
+
+本机运行方法
+============
+
+本机 Homebrew 工具链使用 `riscv64-elf-` 前缀。编译和启动时通过 Make 命令行传入工具名称：
+
+```bash
+make clean
+make CC=riscv64-elf-gcc LD=riscv64-elf-ld
+make CC=riscv64-elf-gcc LD=riscv64-elf-ld qemu
+```
+
+QEMU 使用 `-nographic` 占用当前终端。退出时先按 `Control+A`，松开后再按小写 `x`。
+
+记录中断与异常日志：
+
+```bash
+make CC=riscv64-elf-gcc LD=riscv64-elf-ld \
+  QEMU='qemu-system-riscv64 -d int -D qemu-int.log' qemu
+```
+
+`expect_banner.txt` 是实现前确定的输出契约，由设计者按照学号协议写入，统一验收会把内核实跑输出与它逐字节比较。当前学号使用协议 0，文件内容为一行文本并以换行结束：
+
+```text
+OSLAB1 sid=2024302111239 mod97=0x1d
+```
+
+在编辑器中创建并保存 `expect_banner.txt` 后检查格式：
+
+```bash
+python3 check_expect.py 2024302111239
+```
+
+Lab 1 完成后，从项目根目录运行统一验收。`MAKEFLAGS` 把本机 Homebrew 工具名传给验收脚本内部调用的 Make：
+
+```bash
+MAKEFLAGS='CC=riscv64-elf-gcc LD=riscv64-elf-ld' \
+  sh os-course-labs/tools/lab1-autograder/run.sh \
+  2024302111239-kernel 2024302111239
+```
+
+完成 `entry.S` 后，链接器将识别 `_entry` 并进入后续启动阶段。

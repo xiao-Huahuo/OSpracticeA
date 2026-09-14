@@ -1,0 +1,151 @@
+@startuml
+title echo hi 命令的完整生命周期
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 18
+skinparam BoxPadding 10
+autonumber
+
+actor "用户" as Human
+participant "QEMU 虚拟 UART" as UART
+participant "Shell\nU 态 / 用户栈" as Shell
+participant "trampoline + trap\nS 态 / 进程内核栈" as Trap
+participant "系统调用与控制台\nS 态 / 进程内核栈" as Kernel
+participant "调度器\nS 态 / 调度器栈" as Sched
+participant "子进程 / echo\nU 态 / 用户栈" as Echo
+
+legend left
+  U 态：用户程序通过 ecall 请求内核服务
+  S 态：xv6 内核
+  进程系统调用期间使用该进程自己的内核栈
+  sched/scheduler 切换到每个 CPU 的调度器栈
+endlegend
+
+== 1 Shell 等待一行命令 ==
+
+Shell -> Shell : main -> getcmd -> gets
+Shell -> Trap : read(0, &c, 1) -> ecall\n[U 态 -> S 态]
+activate Trap
+Trap -> Trap : uservec 保存寄存器到 trapframe\n切换内核页表和 Shell 内核栈
+Trap -> Kernel : usertrap -> syscall -> sys_read\n-> fileread -> consoleread
+activate Kernel
+Kernel -> Kernel : acquire(cons.lock)\n输入缓冲区为空
+Kernel -> Kernel : sleep_prepare(&cons.r)\nrelease(cons.lock)
+Kernel -> Sched : sleep -> sched\nShell: RUNNING -> SLEEPING\n[切换时持有 Shell p->lock]
+deactivate Kernel
+deactivate Trap
+
+note over Kernel, Sched
+  思考 1：睡眠前必须先登记等待通道，再释放 cons.lock。
+  这个顺序覆盖回车中断到达的全部时机，确保 Shell 收到每一次唤醒。
+end note
+
+== 2 UART 中断收集输入并唤醒 Shell ==
+
+Human -> UART : 输入 e c h o 空格 h i 回车
+UART -> Trap : UART 外部中断\n[此时可能打断内核或调度器]
+activate Trap
+Trap -> Kernel : kerneltrap -> devintr -> uartintr
+activate Kernel
+loop 每一个输入字符
+  Kernel -> Kernel : uartgetc -> consoleintr\nacquire(cons.lock)
+  Kernel -> UART : consputc -> uartputc_sync\n立即回显字符
+  Kernel -> Kernel : 字符写入 cons.buf\nrelease(cons.lock)
+end
+Kernel -> Kernel : 收到换行：cons.w = cons.e\nwakeup(&cons.r)
+Kernel -> Sched : Shell: SLEEPING -> RUNNABLE\n[wakeup 短暂持有 p->lock]
+deactivate Kernel
+deactivate Trap
+Sched -> Trap : swtch：恢复 Shell 的内核执行现场
+activate Trap
+Trap -> Kernel : 从 sleep 返回，重新 acquire(cons.lock)
+activate Kernel
+Kernel -> Kernel : 从 cons.buf 取字符\ncopyout 到 Shell 用户缓冲区
+Kernel --> Trap : sys_read 返回字符\nrelease(cons.lock)
+deactivate Kernel
+Trap -> Trap : prepare_return -> userret\n切换用户页表、恢复寄存器
+Trap --> Shell : sret，read 返回\n[S 态 -> U 态]
+deactivate Trap
+Shell -> Shell : gets 反复 read，直到读到换行\nparsecmd("echo hi")
+
+== 3 Shell 创建子进程，子进程加载 echo ==
+
+Shell -> Trap : fork() -> ecall
+activate Trap
+Trap -> Kernel : usertrap -> syscall -> sys_fork -> kfork
+activate Kernel
+Kernel -> Kernel : 复制地址空间、trapframe、文件描述符\n子进程设为 RUNNABLE
+Kernel --> Trap : 父进程得到子 PID\n子进程将得到 0
+deactivate Kernel
+Trap --> Shell : sret，fork 返回子 PID
+deactivate Trap
+Shell -> Trap : wait(0) -> ecall
+activate Trap
+Trap -> Kernel : sys_wait -> kwait
+activate Kernel
+Kernel -> Sched : 父 Shell 睡眠等待\n直至子进程退出
+deactivate Kernel
+deactivate Trap
+Sched -> Echo : 调度子进程，fork 返回 0
+Echo -> Echo : runcmd(parsecmd结果)
+Echo -> Trap : exec("echo", ["echo", "hi"]) -> ecall
+activate Trap
+Trap -> Kernel : usertrap -> syscall -> sys_exec -> kexec
+activate Kernel
+Kernel -> Kernel : 从文件系统装载 echo ELF\n建立新页表、用户栈和参数
+Kernel --> Trap : exec 成功
+deactivate Kernel
+Trap --> Echo : sret 到 echo.main\n[S 态 -> U 态]
+deactivate Trap
+
+note over Shell, Echo
+  思考 2：exec 沿用当前子进程，并装入新的用户地址空间和程序入口。
+  子进程 PID 与已打开的 fd 全部保持原有关系。
+end note
+
+== 4 echo 输出 hi 并退出 ==
+
+Echo -> Trap : write(1, "hi", 2) -> ecall
+activate Trap
+Trap -> Kernel : usertrap -> syscall -> sys_write\n-> filewrite -> consolewrite -> uartwrite
+activate Kernel
+Kernel -> Kernel : acquiresleep(tx_lock)\n等待 LSR_TX_IDLE
+Kernel -> UART : 写 UART THR 寄存器
+UART -> Human : 终端显示 hi
+Kernel -> Kernel : releasesleep(tx_lock)
+Kernel --> Trap : write 返回
+deactivate Kernel
+Trap --> Echo : sret
+deactivate Trap
+Echo -> Trap : write(1, "\n", 1) -> ecall
+Trap -> Kernel : 同一条输出路径
+Kernel -> UART : 输出换行
+UART -> Human : 光标进入下一行
+Kernel --> Echo : write 返回
+
+note over Kernel, UART
+  思考 3：键盘输入回显使用 uartputc_sync 轮询发送，
+  echo 的普通 write 使用 uartwrite，UART 忙时由发送中断完成唤醒。
+end note
+
+Echo -> Trap : exit(0) -> ecall
+activate Trap
+Trap -> Kernel : usertrap -> syscall -> sys_exit -> kexit
+activate Kernel
+Kernel -> Kernel : 关闭文件，保存退出码\n持有 wait_lock 与 p->lock\necho: RUNNING -> ZOMBIE
+Kernel -> Sched : wakeup(父 Shell) -> sched
+deactivate Kernel
+deactivate Trap
+Sched -> Trap : 恢复 Shell 的 kwait
+activate Trap
+Trap -> Kernel : kwait 找到 ZOMBIE 子进程\nfreeproc 回收资源
+Kernel --> Trap : wait 返回子 PID
+Trap --> Shell : sret
+deactivate Trap
+Shell -> Shell : 回到命令循环
+Shell -> UART : write(2, "$ ", 2)
+UART -> Human : 显示新的命令提示符
+
+@enduml

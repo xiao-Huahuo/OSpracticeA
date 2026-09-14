@@ -1,0 +1,14 @@
+/.agents/
+.DS_Store
+__pycache__/
+*.py[cod]
+*.o
+*.d
+*.asm
+*.sym
+**/kernel/kernel
+**/mkfs/mkfs
+**/fs.img
+**/user/_*
+qemu-int.log
+.gdbinit

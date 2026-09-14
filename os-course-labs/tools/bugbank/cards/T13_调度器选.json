@@ -1,0 +1,17 @@
+{
+ "id": "T13",
+ "origin": "teacher",
+ "layer": "sched",
+ "type": "race",
+ "root_cause": "调度器选择进程后未持 p->lock 校验状态,进程可能已被他核回收",
+ "symptom": "双核偶发 panic:swtch 到已释放内核栈;单核无法复现",
+ "detection": "-smp 2 压测 + 审查 scheduler 持锁窗口;print 状态机迁移",
+ "difficulty": 5,
+ "variant_params": {
+  "window": [
+   0,
+   2
+  ]
+ },
+ "fixed_by_teachers": true
+}
