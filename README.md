@@ -7,10 +7,10 @@
 | 项目 | 当前进度 |
 |---|---|
 | Lab 0 | 三份 PlantUML 图和配套说明已写入 `labs/lab0/`，PlantUML 实际渲染通过 |
-| Lab 1 | 学号 `2024302111239` 的专属基线已生成，五个核心文件处于待实现状态 |
-| 最近验证 | 基线使用 `riscv64-elf-gcc 16.2.0` 完成编译，链接器到达 `_entry` 待实现里程碑 |
+| Lab 1 | 启动、串口输出、格式化自检和设计记录已完成；课程评测 `3/3` |
+| 最近验证 | 干净构建、QEMU 实跑、Banner 逐字节比对、第二次冷启动和异常日志检查通过 |
 | 运行环境 | Apple Silicon macOS，QEMU 11.1.1，Homebrew RISC-V ELF 工具链 |
-| 下一步 | 完成 Lab 1 启动设计记录，实现 `entry.S` 并验证进入 `start()` |
+| 下一步 | 从通过验收的 Lab 1 内核继续接入 Lab 2 的陷阱、中断和用户态接口 |
 
 ## 构建与启动
 
@@ -49,7 +49,8 @@ OSpracticeA/
 │   ├── 开学第一课-第0课与lab0.pptx
 │   ├── change_history/               # 按日期维护的项目变更记录
 │   │   ├── README.md                 # 变更日期索引
-│   │   └── 2026-09-14.md             # 当日变更内容与验证结果
+│   │   ├── 2026-09-14.md             # 工作区建立与 Lab 0 记录
+│   │   └── 2026-09-27.md             # Lab 1 实现与验收记录
 │   └── 原始包/                       # 原始代码和课程材料的压缩备份
 │       ├── Archive.zip
 │       ├── os-course-labs.zip
@@ -59,11 +60,12 @@ OSpracticeA/
 │   ├── README                        # 当前内核目录树、稳定接口和运行方法
 │   ├── Makefile                      # 构建和 QEMU 启动入口
 │   ├── check_expect.py               # Banner 输出格式自检
+│   ├── expect_banner.txt             # Lab 1 预期 Banner
 │   └── 我的参数.txt                   # 学号派生的各实验参数
 ├── labs/                             # 各实验的文档材料
 │   ├── 基础知识.md                    # 操作系统基础知识笔记
 │   ├── lab0/                         # Lab 0 流程图、分析和报告
-│   └── lab1/                         # Lab 1 设计、测试记录和报告
+│   └── lab1/                         # Lab 1 设计、QEMU 测试与报告
 ├── xv6-riscv/                        # 完整的 xv6 RISC-V 参考源码
 │   ├── kernel/                       # 内核源码
 │   ├── user/                         # 用户程序与用户态库

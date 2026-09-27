@@ -10,10 +10,10 @@ OBJS = kernel/entry.o kernel/start.o kernel/console.o kernel/printf.o kernel/mai
 kernel/kernel: $(OBJS) kernel/kernel.ld
 	$(LD) -T kernel/kernel.ld -o $@ $(OBJS)
 
-%.o: %.c kernel/riscv.h kernel/course_sid.h
+%.o: %.c kernel/riscv.h kernel/course_sid.h kernel/defs.h
 	$(CC) $(CFLAGS) -Ikernel -c -o $@ $<
 
-%.o: %.S
+%.o: %.S kernel/course_sid.h
 	$(CC) $(CFLAGS) -Ikernel -c -o $@ $<
 
 # 验收环境固定(排雷环节禁止改动本行以下内容)

@@ -1,13 +1,9 @@
-lab1 初始代码骨架(自动生成)
-======================
-你所拥有的文件: kernel/kernel.ld(lab1 注释版)、kernel/riscv.h(底层硬件宏定义，完整)、
-               Makefile、kernel/course_sid.h(个性化参数文件，请勿修改)。
-需要你编写的代码: kernel/ 目录下五个核心文件 —— entry.S / start.c / console.c /
-                printf.c / main.c。
-第一步: 仔细阅读《实验说明书(lab1)》第 0 节的代码导读路线，完成设计笔记后再动手编写代码。
-初始预期现象: 骨架代码能够"构建成功"，但会输出一条链接器警告
-(warning: cannot find entry symbol _entry)——此时内核尚未包含具体的启动代码，
-直接运行 make qemu 屏幕无输出。正确编写 entry.S 后该警告将消失。
+Lab 1 个人内核
+==============
+当前内核从 _entry 启动，完成 M 态到 S 态切换，使用轮询 UART 打印学号 Banner
+和格式化自检。实现思路、寄存器配置和 QEMU 验收记录见 ../labs/lab1/lab1.md。
+课程预置的 kernel.ld、riscv.h、memlayout.h、course_sid.h 保持原样；
+Makefile 仅补充头文件的增量构建依赖。
 
 ======================
 推荐 git 工作流(全学期常用基础指令)
@@ -38,6 +34,7 @@ commit 历史虽不作统一打分，但在现场验收进行代码溯源和设�
 ├── README                    # 当前内核结构、能力和运行方法
 ├── Makefile                  # 编译与 QEMU 启动入口
 ├── check_expect.py           # 个性化 Banner 格式检查
+├── expect_banner.txt         # Lab 1 预期 Banner 首行
 ├── 我的参数.txt               # 学号派生参数的可读清单
 └── kernel/
     ├── kernel.ld             # 内核链接地址与段布局，课程预置
@@ -45,6 +42,7 @@ commit 历史虽不作统一打分，但在现场验收进行代码溯源和设�
     ├── memlayout.h           # QEMU virt 物理地址布局，课程预置
     ├── types.h               # 内核基础类型，课程预置
     ├── course_sid.h          # 学号派生参数，课程预置
+    ├── defs.h                # Lab 1 跨文件函数声明
     ├── entry.S               # 启动入口与内核栈，Lab 1 实现
     ├── start.c               # M 态初始化与 M 到 S 特权级切换，Lab 1 实现
     ├── console.c             # UART 字符输出与个性化协议，Lab 1 实现
@@ -55,7 +53,9 @@ commit 历史虽不作统一打分，但在现场验收进行代码溯源和设�
 当前能力
 ========
 
-个性化基线已经生成。五个 Lab 1 核心文件当前保存课程骨架注释，链接过程已经到达 `_entry` 待实现里程碑。后续 Lab 2 至 Lab 6 将继续在本目录增加陷阱与中断、内存管理、进程调度、COW 和文件系统能力。
+Lab 1 已接通单核启动、4 KB 内核栈、M 态到 S 态切换、Bare 地址空间、PMP
+授权、轮询 UART 和最小格式化输出。Banner 按协议 0 打印，随后输出数字边界与
+512 字符连续字符串自检。Lab 2 将在此基础上加入陷阱、中断和用户态接口。
 
 当前稳定接口与约定
 ==================
@@ -65,7 +65,8 @@ commit 历史虽不作统一打分，但在现场验收进行代码溯源和设�
 - `kernel/kernel.ld` 固定内核链接基址与段布局。
 - `kernel/riscv.h` 和 `kernel/memlayout.h` 提供 RISC-V CSR 与 QEMU virt 地址约定。
 - `kernel/course_sid.h` 是个性化参数的唯一来源。
-- Lab 1 约定的实现入口为 `_entry`、`start`、`main`、UART 字符输出接口和最小格式化输出接口。
+- Lab 1 的入口为 `_entry`、`start` 和 `kernel_main`；模块接口在 `kernel/defs.h`。
+- `consoleputc` 在 hart 0 的早期单上下文中同步发送字节，每 23 字节执行节流。
 
 本机运行方法
 ============
@@ -93,13 +94,14 @@ make CC=riscv64-elf-gcc LD=riscv64-elf-ld \
 OSLAB1 sid=2024302111239 mod97=0x1d
 ```
 
-在编辑器中创建并保存 `expect_banner.txt` 后检查格式：
+检查已提交的 `expect_banner.txt` 格式和完整串口自检输出：
 
 ```bash
 python3 check_expect.py 2024302111239
+python3 ../labs/lab1/test_lab1.py
 ```
 
-Lab 1 完成后，从项目根目录运行统一验收。`MAKEFLAGS` 把本机 Homebrew 工具名传给验收脚本内部调用的 Make：
+从项目根目录运行统一验收。`MAKEFLAGS` 把本机 Homebrew 工具名传给验收脚本内部调用的 Make：
 
 ```bash
 MAKEFLAGS='CC=riscv64-elf-gcc LD=riscv64-elf-ld' \
@@ -107,4 +109,5 @@ MAKEFLAGS='CC=riscv64-elf-gcc LD=riscv64-elf-ld' \
   2024302111239-kernel 2024302111239
 ```
 
-完成 `entry.S` 后，链接器将识别 `_entry` 并进入后续启动阶段。
+2026 年 9 月 27 日，统一验收为 `RESULT: 3/3`。链接器对课程预置的单一
+RWX 加载段仍给出权限提示；启动和串口验收通过，具体原因记录在 Lab 1 文档。

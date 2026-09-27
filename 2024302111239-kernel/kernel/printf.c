@@ -1,14 +1,93 @@
 /*
- * lab1 初始骨架代码(自动生成): 系统启动与串口控制台输出。
- * 启动至此的前期初始化流程，需要由你在本实验中设计并实现。
- * 你需要实现: entry.S(start 前的 M 态准备可另置 start.c)、串口轮询输出、
- * 最小 printf。链接脚本 kernel.ld 带注释保留; 底层宏 riscv.h 完整保留。
- * 代码导读路线与设计引导问题详见《实验说明书(lab1)》。
- *
- * 两个环境注意事项(说明书 §2"环境前置条件"与附录 C, 动手前必读):
- *  1. start() 的 M→S 切换清单必须包含 PMP 配置(最简两行):
- *       w_pmpaddr0(0x3fffffffffffffull); w_pmpcfg0(0xf);
- *     否则在新版 QEMU 上 mret 进 S 态的第一条取指即触发 fault(全程无输出)。
- *  2. entry.S 里的陷阱向量标号前加 .balign 4(mtvec 要求 4 字节对齐,
- *     不满足时写入会被硬件静默丢弃)。
+ * Minimal freestanding formatter for the single-hart Lab 1 console.
+ * Supported conversions: %c, %s, %d, %u, %x, %ld, %lu, %lx and %%.
  */
+#include <stdarg.h>
+#include "types.h"
+#include "defs.h"
+
+static void
+print_unsigned(uint64 value, uint base)
+{
+  char digits[sizeof(uint64) * 8];
+  const char *alphabet = "0123456789abcdef";
+  int count = 0;
+
+  do {
+    digits[count++] = alphabet[value % base];
+    value /= base;
+  } while (value != 0);
+
+  while (count > 0)
+    consoleputc(digits[--count]);
+}
+
+static void
+print_signed(long value)
+{
+  if (value < 0) {
+    consoleputc('-');
+    print_unsigned((uint64)(-(value + 1)) + 1, 10);
+  } else {
+    print_unsigned((uint64)value, 10);
+  }
+}
+
+void
+kprintf(const char *format, ...)
+{
+  va_list args;
+  va_start(args, format);
+
+  for (const char *p = format; *p; p++) {
+    int wide;
+
+    if (*p != '%') {
+      consoleputc(*p);
+      continue;
+    }
+    p++;
+    wide = (*p == 'l');
+    if (wide)
+      p++;
+    if (*p == 0) {
+      consoleputc('%');
+      if (wide)
+        consoleputc('l');
+      break;
+    }
+
+    switch (*p) {
+    case 'c':
+      consoleputc(va_arg(args, int));
+      break;
+    case 's': {
+      const char *text = va_arg(args, const char *);
+      if (text == 0)
+        text = "(null)";
+      while (*text)
+        consoleputc(*text++);
+      break;
+    }
+    case 'd':
+      print_signed(wide ? va_arg(args, long) : va_arg(args, int));
+      break;
+    case 'u':
+      print_unsigned(wide ? va_arg(args, unsigned long) : va_arg(args, uint), 10);
+      break;
+    case 'x':
+      print_unsigned(wide ? va_arg(args, unsigned long) : va_arg(args, uint), 16);
+      break;
+    case '%':
+      consoleputc('%');
+      break;
+    default:
+      consoleputc('%');
+      if (wide)
+        consoleputc('l');
+      consoleputc(*p);
+      break;
+    }
+  }
+  va_end(args);
+}

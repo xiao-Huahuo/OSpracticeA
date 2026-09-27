@@ -1,14 +1,43 @@
 /*
- * lab1 初始骨架代码(自动生成): 系统启动与串口控制台输出。
- * 启动至此的前期初始化流程，需要由你在本实验中设计并实现。
- * 你需要实现: entry.S(start 前的 M 态准备可另置 start.c)、串口轮询输出、
- * 最小 printf。链接脚本 kernel.ld 带注释保留; 底层宏 riscv.h 完整保留。
- * 代码导读路线与设计引导问题详见《实验说明书(lab1)》。
- *
- * 两个环境注意事项(说明书 §2"环境前置条件"与附录 C, 动手前必读):
- *  1. start() 的 M→S 切换清单必须包含 PMP 配置(最简两行):
- *       w_pmpaddr0(0x3fffffffffffffull); w_pmpcfg0(0xf);
- *     否则在新版 QEMU 上 mret 进 S 态的第一条取指即触发 fault(全程无输出)。
- *  2. entry.S 里的陷阱向量标号前加 .balign 4(mtvec 要求 4 字节对齐,
- *     不满足时写入会被硬件静默丢弃)。
+ * M-mode setup for the boot hart. Establish S-mode access and a Bare
+ * address space before mret enters the single Lab 1 kernel context.
  */
+#include "types.h"
+#include "riscv.h"
+#include "defs.h"
+
+#define MSTATUS_MIE  (1L << 3)
+#define MSTATUS_MPIE (1L << 7)
+#define MEDELEG_SUPERVISOR 0xffffL
+#define MIDELEG_SUPERVISOR ((1L << 1) | SIE_STIE | SIE_SEIE)
+
+extern void strap(void);
+
+void
+start(void)
+{
+  uint64 status = r_mstatus();
+
+  /* MPP=S chooses the target mode; MIE/MPIE/SIE stay disabled. */
+  status &= ~(MSTATUS_MPP_MASK | MSTATUS_MIE | MSTATUS_MPIE | SSTATUS_SIE);
+  status |= MSTATUS_MPP_S;
+  w_mstatus(status);
+  w_mepc((uint64)kernel_main);
+
+  /* Future S-mode traps are delegated, with an aligned holding vector. */
+  w_medeleg(r_medeleg() | MEDELEG_SUPERVISOR);
+  w_mideleg(r_mideleg() | MIDELEG_SUPERVISOR);
+  w_stvec((uint64)strap);
+
+  /* Physical addresses remain directly usable until Lab 3 adds paging. */
+  w_satp(0);
+  sfence_vma();
+
+  /* NAPOT permits S-mode instruction fetch and MMIO across physical RAM. */
+  w_pmpaddr0(0x3fffffffffffffull);
+  w_pmpcfg0(0xf);
+
+  asm volatile("mret");
+  for (;;)
+    ;
+}
