@@ -1,9 +1,10 @@
 Lab 1 个人内核
 ==============
 当前内核从 _entry 启动，完成 M 态到 S 态切换，使用轮询 UART 打印学号 Banner
-和格式化自检。实现思路、寄存器配置和 QEMU 验收记录见 ../labs/lab1/lab1.md。
+和格式化自检。Lab 1 验收记录见 ../labs/lab1/lab1.md。Lab 2 赠送文件已集成，
+地址约定冲突与后续计划见 ../labs/lab2/lab2.md。
 课程预置的 kernel.ld、riscv.h、memlayout.h、course_sid.h 保持原样；
-Makefile 仅补充头文件的增量构建依赖。
+Makefile 在原有构建入口上接入 Lab 2 用户程序内嵌规则。
 
 ======================
 推荐 git 工作流(全学期常用基础指令)
@@ -33,15 +34,37 @@ commit 历史虽不作统一打分，但在现场验收进行代码溯源和设�
 2024302111239-kernel/
 ├── README                    # 当前内核结构、能力和运行方法
 ├── Makefile                  # 编译与 QEMU 启动入口
+├── Makefile.upgrade          # Lab 2 用户程序内嵌规则，课程赠送件
 ├── check_expect.py           # 个性化 Banner 格式检查
 ├── expect_banner.txt         # Lab 1 预期 Banner 首行
 ├── 我的参数.txt               # 学号派生参数的可读清单
+├── support/
+│   └── inject_uart.py        # Lab 2 串口输入测试工具，课程赠送件
+├── tests/
+│   ├── badecall.c            # 非法系统调用测试，课程赠送件
+│   ├── bufstorm.c            # 输入缓冲区测试，课程赠送件
+│   └── README-tests.md       # 官方测试用法
+├── user/
+│   ├── user.h                # 用户态接口声明，课程赠送件
+│   ├── usys.pl               # 系统调用桩生成脚本，课程赠送件
+│   ├── ulib.c                # 用户态基础库，课程赠送件
+│   ├── printf.c              # 用户态格式化输出，课程赠送件
+│   ├── user.ld               # 地址 0 的用户程序链接规则，课程赠送件
+│   ├── sh.c                  # 交互式 Shell，课程赠送件
+│   ├── hi.c                  # 用户程序冒烟测试，课程赠送件
+│   └── spin.c                # 忙循环用户程序，课程赠送件
 └── kernel/
     ├── kernel.ld             # 内核链接地址与段布局，课程预置
     ├── riscv.h               # RISC-V CSR 与底层指令接口，课程预置
     ├── memlayout.h           # QEMU virt 物理地址布局，课程预置
     ├── types.h               # 内核基础类型，课程预置
     ├── course_sid.h          # 学号派生参数，课程预置
+    ├── syscall.h             # Lab 2 系统调用号，课程赠送件
+    ├── stat.h                # 用户库依赖的 ABI 头，课程赠送件
+    ├── fcntl.h               # 文件标志位，课程赠送件
+    ├── vm.h                  # 用户库依赖的内存接口头，课程赠送件
+    ├── param.h               # Lab 2 常量约定，课程赠送件
+    ├── trampoline.S          # 用户陷入与返回汇编，课程赠送件
     ├── defs.h                # Lab 1 跨文件函数声明
     ├── entry.S               # 启动入口与内核栈，Lab 1 实现
     ├── start.c               # M 态初始化与 M 到 S 特权级切换，Lab 1 实现
@@ -55,7 +78,8 @@ commit 历史虽不作统一打分，但在现场验收进行代码溯源和设�
 
 Lab 1 已接通单核启动、4 KB 内核栈、M 态到 S 态切换、Bare 地址空间、PMP
 授权、轮询 UART 和最小格式化输出。Banner 按协议 0 打印，随后输出数字边界与
-512 字符连续字符串自检。Lab 2 将在此基础上加入陷阱、中断和用户态接口。
+512 字符连续字符串自检。Lab 2 已接入用户程序编译、平铺二进制与内嵌程序表，
+`sh`、`hi`、`spin` 已生成构建产物；陷阱、中断和 Shell 运行仍待地址约定澄清。
 
 当前稳定接口与约定
 ==================
@@ -71,12 +95,12 @@ Lab 1 已接通单核启动、4 KB 内核栈、M 态到 S 态切换、Bare 地�
 本机运行方法
 ============
 
-本机 Homebrew 工具链使用 `riscv64-elf-` 前缀。编译和启动时通过 Make 命令行传入工具名称：
+本机 Homebrew 工具链使用 `riscv64-elf-` 前缀。Lab 2 增量包加入了二进制转换步骤，构建与启动时一并指定 `OBJCOPY`：
 
 ```bash
 make clean
-make CC=riscv64-elf-gcc LD=riscv64-elf-ld
-make CC=riscv64-elf-gcc LD=riscv64-elf-ld qemu
+make CC=riscv64-elf-gcc LD=riscv64-elf-ld OBJCOPY=riscv64-elf-objcopy
+make CC=riscv64-elf-gcc LD=riscv64-elf-ld OBJCOPY=riscv64-elf-objcopy qemu
 ```
 
 QEMU 使用 `-nographic` 占用当前终端。退出时先按 `Control+A`，松开后再按小写 `x`。
@@ -104,7 +128,7 @@ python3 ../labs/lab1/test_lab1.py
 从项目根目录运行统一验收。`MAKEFLAGS` 把本机 Homebrew 工具名传给验收脚本内部调用的 Make：
 
 ```bash
-MAKEFLAGS='CC=riscv64-elf-gcc LD=riscv64-elf-ld' \
+MAKEFLAGS='CC=riscv64-elf-gcc LD=riscv64-elf-ld OBJCOPY=riscv64-elf-objcopy' \
   sh os-course-labs/tools/lab1-autograder/run.sh \
   2024302111239-kernel 2024302111239
 ```

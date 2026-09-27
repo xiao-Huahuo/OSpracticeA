@@ -12,3 +12,6 @@ __pycache__/
 **/user/_*
 qemu-int.log
 .gdbinit
+2024302111239-kernel/user-flat/
+2024302111239-kernel/user/usys.S
+2024302111239-kernel/kernel/userimg.S
