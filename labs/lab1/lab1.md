@@ -91,23 +91,24 @@ make CC=riscv64-elf-gcc LD=riscv64-elf-ld qemu
 
 链接阶段会提示单个加载段具有 RWX 权限，原因和本轮验收结果记录在下节。看到 Banner 和两行自检输出，说明本轮启动路径已运行到 S 态的 `kernel_main`。
 
-## 验证记录
+## 如何验收
 
-在项目根目录运行以下命令，Homebrew 工具链的可执行文件名前缀为 `riscv64-elf-`：
+在 `OSpracticeA` 根目录运行下面两条命令。第一条是课程提供的验收脚本，会重新编译内核、启动 QEMU 并检查开机输出；这里由脚本负责关闭 QEMU。`MAKEFLAGS` 把本机的 RISC-V 编译器和链接器名称传给脚本。第二条检查 Banner 后面的两行自检内容，包括数字边界和 512 个连续字符。
 
 ```bash
-cd 2024302111239-kernel
-make clean
-make CC=riscv64-elf-gcc LD=riscv64-elf-ld
-python3 check_expect.py 2024302111239
-python3 ../labs/lab1/test_lab1.py
-cd ..
 MAKEFLAGS='CC=riscv64-elf-gcc LD=riscv64-elf-ld' \
   sh os-course-labs/tools/lab1-autograder/run.sh \
   2024302111239-kernel 2024302111239
+python3 labs/lab1/test_lab1.py
 ```
 
-2026 年 9 月 27 日的实际结果：干净构建生成入口 `0x80000000`；`stack0_top` 与 `bss_start` 相差 `0x1000` 字节，等于参数指定的 4 KB；期望文件通过协议 0 形状检查。独立 QEMU 测试核对了 `0`、`-2147483648`、`2147483647`、`0xffffffff`、空字符串及 512 字符连续输出；课程评测返回 Banner 一致、两次冷启动一致、异常日志清洁，`RESULT: 3/3`。课程脚本也识别了 `COURSE_SID` 节流引用。额外以 `-smp 2` 冷启动，串口输出仍为 636 字节，`-d int` 日志为空。内核相关的 Lab 0 回归属于图表审阅，三份图表源码与说明维持在 `labs/lab0/`，本次未改动。
+课程脚本显示 `PASS:banner_match`，表示实际开机首行与 `expect_banner.txt` 对上了；`PASS:idempotent` 表示两次开机打印的内容相同；`PASS:d_int` 表示运行期间没有记录到异常。最后看到 `RESULT: 3/3`，这三项就全部通过。`INFO:throttle` 是对学号节流代码的提示，单独列在三项结果之外。第二条命令打印 `Lab 1 serial output: PASS`，说明后两行自检也符合预期。
+
+若出现 `FAIL`，先看冒号后面的项目名。`banner_match` 对应首行文字与换行，`idempotent` 对应两次开机的输出差异，`d_int` 对应内核异常；`expect_file` 或 `expect_shape` 则指向预期输出文件。修好后重跑同一组命令，就能看到改动是否解决了问题。
+
+## 验证记录
+
+2026 年 9 月 27 日按上一节命令验收，课程脚本返回 `RESULT: 3/3`，串口自检返回 `Lab 1 serial output: PASS`。干净构建生成入口 `0x80000000`；`stack0_top` 与 `bss_start` 相差 `0x1000` 字节，等于参数指定的 4 KB；期望文件通过协议 0 形状检查。独立 QEMU 测试核对了 `0`、`-2147483648`、`2147483647`、`0xffffffff`、空字符串及 512 字符连续输出。课程脚本还验证了两次冷启动输出一致、异常日志清洁，并识别 `COURSE_SID` 节流引用。额外以 `-smp 2` 冷启动，串口输出仍为 636 字节，`-d int` 日志为空。内核相关的 Lab 0 回归属于图表审阅，三份图表源码与说明维持在 `labs/lab0/`，本次未改动。
 
 链接器仍报告一个 `LOAD` 段具有 RWX 权限。预置且标明只读的 `kernel.ld` 把代码与数据连续放进同一加载段，`-z separate-code` 也保持该段布局。该提示不影响本轮 QEMU 启动及串口验收；后续若课程允许调整链接段权限，可在调整链接脚本时一并消除。
 
