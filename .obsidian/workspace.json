@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "labs/lab1/lab1验收.md",
+                "file": "labs/lab0/lab0.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "lab1验收"
+              "title": "lab0"
             }
           }
         ]
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "labs/lab1/lab1验收.md",
+                "file": "labs/lab0/lab0.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,7 +118,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "labs/lab1/lab1验收.md",
+                "file": "labs/lab0/lab0.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "labs/lab1/lab1验收.md",
+                "file": "labs/lab0/lab0.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -190,29 +190,30 @@
   },
   "active": "7270642af36999aa",
   "lastOpenFiles": [
-    "labs/lab0/lab0.md",
-    "labs/lab1/02-物理内存布局.png",
-    "labs/lab1/01-启动时序.png",
-    "labs/lab1/lab1设计文档.md",
-    "2024302111239-kernel/kernel/kernel",
-    "2024302111239-kernel/kernel/userimg.o",
-    "2024302111239-kernel/kernel/userimg.S",
-    "2024302111239-kernel/user-flat/badptr.bin",
-    "2024302111239-kernel/user-flat/badptr.elf",
-    "2024302111239-kernel/user-flat/badptr.o",
-    "2024302111239-kernel/user-flat/inputcheck.bin",
-    "2024302111239-kernel/user-flat/inputcheck.elf",
-    "2024302111239-kernel/user-flat/inputcheck.o",
-    "2024302111239-kernel/user-flat/bufstorm.bin",
+    "labs/lab2/test_lab2.py",
     "labs/lab2/lab2验收.md",
     "labs/lab2/lab2设计文档.md",
+    "labs/lab2/01-陷入与返回.puml",
     "labs/lab2/01-陷入与返回.png",
+    "labs/lab2",
     "labs/lab1/lab1验收.md",
+    "labs/lab1/lab1设计文档.md",
+    "labs/lab1/02-物理内存布局.puml",
+    "labs/lab1/02-物理内存布局.png",
+    "labs/lab1/01-启动时序.puml",
+    "labs/lab1/01-启动时序.png",
     "labs/lab0/03-时钟中断旅程.png",
     "labs/lab0/02-exec后核心数据结构快照.png",
     "labs/lab0/01-echo命令生命周期.png",
+    "docs/lab2-实验说明书-学生版.docx",
     "docs/change_history/2026-09-28.md",
+    "2024302111239-kernel/user/usys.pl",
+    "2024302111239-kernel/user/user.ld",
+    "2024302111239-kernel/user/user.h",
+    "2024302111239-kernel/user/ulib.c",
+    "2024302111239-kernel/user/spin.c",
     "2024302111239-kernel/tests/README-tests.md",
-    "labs/lab1/lab1.md"
+    "labs/lab1/lab1.md",
+    "labs/lab0/lab0.md"
   ]
 }
