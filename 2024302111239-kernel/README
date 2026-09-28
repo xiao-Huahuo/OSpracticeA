@@ -1,8 +1,8 @@
-Lab 1 个人内核
-==============
-当前内核从 _entry 启动，完成 M 态到 S 态切换，使用轮询 UART 打印学号 Banner
-和格式化自检。Lab 1 验收记录见 ../labs/lab1/lab1.md。Lab 2 赠送文件已集成，
-地址约定冲突与后续计划见 ../labs/lab2/lab2.md。
+个人累积内核
+============
+当前内核从 _entry 启动，先打印 Lab 1 Banner 和自检，再进入 Lab 2 的交互式
+Shell。Lab 1 验收记录见 ../labs/lab1/lab1.md，Lab 2 的实现与运行方法见
+../labs/lab2/lab2.md。
 课程预置的 kernel.ld、riscv.h、memlayout.h、course_sid.h 保持原样；
 Makefile 在原有构建入口上接入 Lab 2 用户程序内嵌规则。
 
@@ -52,7 +52,11 @@ commit 历史虽不作统一打分，但在现场验收进行代码溯源和设�
 │   ├── user.ld               # 地址 0 的用户程序链接规则，课程赠送件
 │   ├── sh.c                  # 交互式 Shell，课程赠送件
 │   ├── hi.c                  # 用户程序冒烟测试，课程赠送件
-│   └── spin.c                # 忙循环用户程序，课程赠送件
+│   ├── spin.c                # 忙循环用户程序，课程赠送件
+│   ├── badecall.c            # 官方非法调用测试的构建入口
+│   ├── bufstorm.c            # 官方输入测试的构建入口
+│   ├── badptr.c              # 用户地址权限测试
+│   └── inputcheck.c          # 连续输入计数测试
 └── kernel/
     ├── kernel.ld             # 内核链接地址与段布局，课程预置
     ├── riscv.h               # RISC-V CSR 与底层指令接口，课程预置
@@ -65,21 +69,30 @@ commit 历史虽不作统一打分，但在现场验收进行代码溯源和设�
     ├── vm.h                  # 用户库依赖的内存接口头，课程赠送件
     ├── param.h               # Lab 2 常量约定，课程赠送件
     ├── trampoline.S          # 用户陷入与返回汇编，课程赠送件
-    ├── defs.h                # Lab 1 跨文件函数声明
+    ├── defs.h                # 启动、控制台与陷入函数声明
+    ├── vmcore.h              # 页分配和 Sv39 映射接口
+    ├── proc.h                # 进程状态与 trapframe 布局
     ├── entry.S               # 启动入口与内核栈，Lab 1 实现
-    ├── start.c               # M 态初始化与 M 到 S 特权级切换，Lab 1 实现
-    ├── console.c             # UART 字符输出与个性化协议，Lab 1 实现
+    ├── start.c               # M 态配置、特权级切换与时钟入口
+    ├── console.c             # UART 发送、接收与输入环形缓冲
     ├── printf.c              # 最小格式化输出，Lab 1 实现
-    └── main.c                # 内核主入口、Banner 与自检，Lab 1 实现
+    ├── main.c                # Banner、自检与 Lab 2 子系统初始化
+    ├── kalloc.c              # 物理页分配与释放
+    ├── vm.c                  # Sv39 内核和用户页表
+    ├── proc.c                # fork、exec、wait 与进程生命周期
+    ├── swtch.S               # 内核调度上下文切换
+    ├── trap.c                # 用户陷入和内核中断分发
+    ├── kernelvec.S           # 内核中断寄存器保存与恢复
+    ├── syscall.c             # 系统调用参数和分发
+    └── trampoline_wrap.S     # 只读跳板的可执行页接线
 ```
 
 当前能力
 ========
 
-Lab 1 已接通单核启动、4 KB 内核栈、M 态到 S 态切换、Bare 地址空间、PMP
-授权、轮询 UART 和最小格式化输出。Banner 按协议 0 打印，随后输出数字边界与
-512 字符连续字符串自检。Lab 2 已接入用户程序编译、平铺二进制与内嵌程序表，
-`sh`、`hi`、`spin` 已生成构建产物；陷阱、中断和 Shell 运行仍待地址约定澄清。
+Lab 1 的启动、Banner 与格式化自检保持原样。Lab 2 已接通课程跳板、Sv39 最小
+映射、系统调用、UART 中断输入、按学号配置的 128 字节字符流缓冲和单核进程切换。
+QEMU 可运行 `sh`、`hi`、`spin`，非法调用号及用户指针测试返回预期错误。
 
 当前稳定接口与约定
 ==================
@@ -90,7 +103,9 @@ Lab 1 已接通单核启动、4 KB 内核栈、M 态到 S 态切换、Bare 地�
 - `kernel/riscv.h` 和 `kernel/memlayout.h` 提供 RISC-V CSR 与 QEMU virt 地址约定。
 - `kernel/course_sid.h` 是个性化参数的唯一来源。
 - Lab 1 的入口为 `_entry`、`start` 和 `kernel_main`；模块接口在 `kernel/defs.h`。
-- `consoleputc` 在 hart 0 的早期单上下文中同步发送字节，每 23 字节执行节流。
+- `consoleputc` 在 hart 0 同步发送字节，每 23 字节执行学号节流。
+- Lab 2 的用户入口为只读 `trampoline.S`；`proc.h` 的 trapframe 布局与赠送汇编一致。
+- 用户程序位于每进程的低地址映射，trapframe 与 trampoline 位于课程约定的高地址。
 
 本机运行方法
 ============
@@ -108,7 +123,7 @@ QEMU 使用 `-nographic` 占用当前终端。退出时先按 `Control+A`，松�
 记录中断与异常日志：
 
 ```bash
-make CC=riscv64-elf-gcc LD=riscv64-elf-ld \
+make CC=riscv64-elf-gcc LD=riscv64-elf-ld OBJCOPY=riscv64-elf-objcopy \
   QEMU='qemu-system-riscv64 -d int -D qemu-int.log' qemu
 ```
 
@@ -118,20 +133,14 @@ make CC=riscv64-elf-gcc LD=riscv64-elf-ld \
 OSLAB1 sid=2024302111239 mod97=0x1d
 ```
 
-检查已提交的 `expect_banner.txt` 格式和完整串口自检输出：
+检查已提交的 `expect_banner.txt` 格式、Lab 1 输出及 Lab 2 交互：
 
 ```bash
 python3 check_expect.py 2024302111239
 python3 ../labs/lab1/test_lab1.py
+python3 ../labs/lab2/test_lab2.py
 ```
 
-从项目根目录运行统一验收。`MAKEFLAGS` 把本机 Homebrew 工具名传给验收脚本内部调用的 Make：
-
-```bash
-MAKEFLAGS='CC=riscv64-elf-gcc LD=riscv64-elf-ld OBJCOPY=riscv64-elf-objcopy' \
-  sh os-course-labs/tools/lab1-autograder/run.sh \
-  2024302111239-kernel 2024302111239
-```
-
-2026 年 9 月 27 日，统一验收为 `RESULT: 3/3`。链接器对课程预置的单一
-RWX 加载段仍给出权限提示；启动和串口验收通过，具体原因记录在 Lab 1 文档。
+Lab 1 在 `lab1-submit` 节点的课程验收结果为 `3/3`。当前 Lab 2 会产生正常的
+用户系统调用、时钟和 UART 中断日志，按 Lab 2 文档运行交互测试与旧输出回归。
+课程链接脚本的 RWX 加载段提示仍存在，原因与测试结果见 Lab 2 文档。

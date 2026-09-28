@@ -8,10 +8,10 @@
 |---|---|
 | Lab 0 | 三份 PlantUML 图和配套说明已写入 `labs/lab0/`，PlantUML 实际渲染通过 |
 | Lab 1 | 启动、串口输出、格式化自检和设计记录已完成；课程评测 `3/3` |
-| Lab 2 | 增量包已集成并完成构建；`satp=0` 与只读跳板地址约定冲突，Trap 和 Shell 待课程澄清 |
-| 最近验证 | Lab 2 赠送文件逐字节核对、用户程序内嵌构建、Lab 1 串口回归通过 |
+| Lab 2 | 用户态陷入、系统调用、串口接收和交互式 Shell 已接通；QEMU 交互测试通过 |
+| 最近验证 | 干净构建、`hi`／`badecall`／输入缓冲测试、时钟与 UART 中断、Lab 1 输出回归通过 |
 | 运行环境 | Apple Silicon macOS，QEMU 11.1.1，Homebrew RISC-V ELF 工具链 |
-| 下一步 | 取得与 Lab 2 直接访问阶段相容的课程地址约定，再实现 Trap、输入与 Shell |
+| 下一步 | 在通过验收的 Lab 2 内核上继续 Lab 3 内存管理 |
 
 ## 构建与启动
 
@@ -52,7 +52,8 @@ OSpracticeA/
 │   ├── change_history/               # 按日期维护的项目变更记录
 │   │   ├── README.md                 # 变更日期索引
 │   │   ├── 2026-09-14.md             # 工作区建立与 Lab 0 记录
-│   │   └── 2026-09-27.md             # Lab 1 验收与 Lab 2 增量包记录
+│   │   ├── 2026-09-27.md             # Lab 1 验收与 Lab 2 增量包记录
+│   │   └── 2026-09-28.md             # Lab 2 实现与 QEMU 验收
 │   └── 原始包/                       # 原始代码和课程材料的压缩备份
 │       ├── Archive.zip
 │       ├── os-course-labs.zip
@@ -72,7 +73,7 @@ OSpracticeA/
 │   ├── 基础知识.md                    # 操作系统基础知识笔记
 │   ├── lab0/                         # Lab 0 流程图、分析和报告
 │   ├── lab1/                         # Lab 1 设计、QEMU 测试与报告
-│   └── lab2/                         # Lab 2 计划、集成记录与地址约定阻塞
+│   └── lab2/                         # Lab 2 设计、交互测试与验收记录
 ├── xv6-riscv/                        # 完整的 xv6 RISC-V 参考源码
 │   ├── kernel/                       # 内核源码
 │   ├── user/                         # 用户程序与用户态库

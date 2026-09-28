@@ -1,10 +1,11 @@
 /*
- * M-mode setup for the boot hart. Establish S-mode access and a Bare
- * address space before mret enters the single Lab 1 kernel context.
+ * M-mode setup for the boot hart. Establish S-mode access, timer support,
+ * and a Bare boot address space before mret enters kernel_main.
  */
 #include "types.h"
 #include "riscv.h"
 #include "defs.h"
+#include "course_sid.h"
 
 #define MSTATUS_MIE  (1L << 3)
 #define MSTATUS_MPIE (1L << 7)
@@ -36,6 +37,11 @@ start(void)
   /* NAPOT permits S-mode instruction fetch and MMIO across physical RAM. */
   w_pmpaddr0(0x3fffffffffffffull);
   w_pmpcfg0(0xf);
+
+  /* Expose time and the S-mode timer comparator for Lab 2 ticks. */
+  w_menvcfg(r_menvcfg() | MENVCFG_STCE);
+  w_mcounteren(r_mcounteren() | 2);
+  w_stimecmp(r_time() + 1000000ULL * LAB2_TICK);
 
   asm volatile("mret");
   for (;;)

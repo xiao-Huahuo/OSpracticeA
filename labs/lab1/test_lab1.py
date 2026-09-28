@@ -26,7 +26,7 @@ def main() -> None:
         "hex=0xffffffff empty=[]"
     ), lines[1]
     assert lines[2] == "SELFTEST long=[" + "0123456789abcdef" * 32 + "]", len(lines[2])
-    assert len(lines) == 3, lines[3:]
+    assert len(lines) >= 3, lines
     print("Lab 1 serial output: PASS")
 
 
