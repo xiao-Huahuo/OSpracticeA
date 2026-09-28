@@ -42,30 +42,38 @@ RISC-V 执行 `ecall` 时把当前地址放入 `sepc`、记录原因并跳到 `s
 
 时钟比较器以 1,000,000 个 `time` 计数作为基本周期，再乘上 `LAB2_TICK`；当前学号参数为 1。PLIC 把 UART 中断交给 S 态，QEMU 的 `-d int` 日志在交互测试中同时记录到用户 `ecall`、S 态时钟中断和 UART 外部中断。日志中的其他异常会让自动测试失败。
 
-## 如何启动
+## 验收过程
 
-在仓库根目录进入个人内核，用本机 Homebrew 工具名构建并启动：
+这次直接在当前项目操作，使用的就是已经完成 Lab 2 的代码。打开 VS Code 下方的终端，按下面顺序做。
 
-```bash
-cd 2024302111239-kernel
-make CC=riscv64-elf-gcc LD=riscv64-elf-ld OBJCOPY=riscv64-elf-objcopy qemu
-```
+1. 进入内核目录，清理上次编译的文件，再编译并启动：
 
-终端先显示 `OSLAB1 sid=2024302111239 mod97=0x1d` 和两行 Lab 1 自检，接着出现 `sh>`。输入 `hi` 会看到带进程号的问候，再回到 `sh>`；输入 `badecall` 会看到 `TEST-1 PASS`。按 `Control+A`，松开后按小写 `x` 退出 QEMU。
+   ```bash
+   cd /Users/slumpyfufu/Desktop/Projects/OSpracticeA/2024302111239-kernel
+   make clean
+   make CC=riscv64-elf-gcc LD=riscv64-elf-ld OBJCOPY=riscv64-elf-objcopy qemu
+   ```
 
-## 如何验收
+   终端先显示编译命令，然后打印 Lab 1 的 Banner 和两行自检，接着出现 `sh>`。看到 `sh>`，就表示可以输入命令了。链接时的 `LOAD segment with RWX permissions` 提示来自课程链接脚本，后面的命令仍会正常运行。
 
-从仓库根目录运行下面一组命令。第一条从干净状态构建，后两条会自行启动并关闭 QEMU，检查实际串口输出和用户程序行为。
+2. 在 `sh>` 后输入 `hi`，按回车。应看到 `hi: user program running, pid=2`，随后再次出现 `sh>`。这里的进程号会随执行次数增加，重点是程序能打印、Shell 能回来。
 
-```bash
-cd 2024302111239-kernel
-make clean
-make CC=riscv64-elf-gcc LD=riscv64-elf-ld OBJCOPY=riscv64-elf-objcopy
-python3 ../labs/lab2/test_lab2.py
-python3 ../labs/lab1/test_lab1.py
-```
+3. 继续输入 `badecall`，应看到 `TEST-1 PASS: unknown syscalls all return -1`，随后回到 `sh>`。输入 `badptr`，应看到 `BADPTR PASS`。这两项分别检查错误的系统调用和错误的内存地址有没有得到安全处理。
 
-看到 `Lab 2 QEMU interaction: PASS`，说明 Shell 依次运行了 `hi`、`badecall`、`badptr`、`bufstorm` 和连续输入测试，并在 `spin` 运行时接收键盘字符；测试还核对了三类预期陷入。`Lab 1 serial output: PASS` 表示旧 Banner 与两行自检仍与原先相同。Lab 1 的旧评分脚本要求全程没有陷入，这一条件属于当时只有启动输出的阶段；现在系统调用和时钟中断会正常产生陷入，以本轮交互测试与 Lab 1 输出回归为准。
+4. 输入 `bufstorm` 后，依次输入 `one`、`two`、`three`、`four`，每输入一行都按回车。四行输入结束后应看到 `BUFSTORM lines=4 bytes=19`，然后回到 `sh>`。键盘输入和程序回显可能让同一行文字出现两次。
+
+5. 输入 `spin`。屏幕会继续显示 `spin 0`、`spin 1` 等数字；这时输入 `abc` 并按回车，应能看到 `abc` 出现在终端，数字继续增加。`spin` 会一直运行，按 `Control+A`，松开后按小写 `x` 退出 QEMU。
+
+6. 回到命令提示符后，运行自动测试。它会自己启动和关闭 QEMU，还会检查容量以内的连续 64 字节输入，以及 Lab 1 原来的输出：
+
+   ```bash
+   python3 ../labs/lab2/test_lab2.py
+   python3 ../labs/lab1/test_lab1.py
+   ```
+
+   两条命令通过时，分别显示 `Lab 2 QEMU interaction: PASS` 和 `Lab 1 serial output: PASS`。检查结束后可运行 `make clean` 清掉编译文件，日常代码仍留在当前的 `master` 分支。
+
+课程赠送的 `inject_uart.py` 会把本轮的 `sh>` 误认成启动失败，因此它的 `boot TIMEOUT` 属于提示符不匹配；最终以上面两条实跑测试检查启动、输入和程序运行。
 
 ## 实测结果与当前边界
 

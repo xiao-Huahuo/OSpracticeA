@@ -78,56 +78,64 @@ OSLAB1 sid=2024302111239 mod97=0x1d
 
 随后输出一行数字与空字符串测试，再通过一次 `%s` 输出 512 个连续字符。测试内容位于 Banner 后面，课程工具仍按第一行检查个人协议；独立测试会检查自检两行的完整内容和长度。内核完成输出后进入 `wfi` 循环，保持 QEMU 中的运行状态。
 
-## 如何启动
+## 验收过程
 
-现在主目录已经开发到 Lab 2。要看 Lab 1 当时的验收画面，先在 VS Code 顶部点“终端 → 新建终端”，再复制下面三行。第一行回到仓库，第二行在旁边建立一份独立的 Lab 1 检查目录，第三行进入其中的个人内核；当前 Lab 2 代码保持在原目录。
+好，按**你坐在 VS Code 前实际操作**的顺序说。下面验收的是当时的 Lab 1 版本；它运行后只有打印内容，**没有 `sh>`**。
 
-```bash
-cd /Users/slumpyfufu/Desktop/Projects/OSpracticeA
-git worktree add --detach ../OSpracticeA-lab1-check lab1-submit
-cd ../OSpracticeA-lab1-check/2024302111239-kernel
-```
+1. 打开 VS Code 下方的终端。当前仓库已是 Lab 2，先暂时切到 Lab 1 提交时的版本：
 
-在这个终端继续运行：
+   ```bash
+   cd /Users/slumpyfufu/Desktop/Projects/OSpracticeA
+   git switch --detach lab1-submit
+   ```
 
-```bash
-make CC=riscv64-elf-gcc LD=riscv64-elf-ld qemu
-```
+2. 编译并开机：
 
-终端先显示几行编译命令，然后依次出现 Banner、数字自检和长字符串自检。第一行是 `OSLAB1 sid=2024302111239 mod97=0x1d`。打印完后 QEMU 仍占用终端，这是内核在等待。按 `Control+A`，松开后按小写 `x`，终端会显示 `QEMU: Terminated` 并回到命令提示符。
+   ```bash
+   cd 2024302111239-kernel
+   make clean
+   make CC=riscv64-elf-gcc LD=riscv64-elf-ld qemu
+   ```
 
-链接阶段会提示单个加载段具有 RWX 权限，原因记录在后面的“验证记录”。看到 Banner 和两行自检输出，说明本轮启动路径已运行到 S 态的 `kernel_main`。
+   终端会先刷出编译命令，然后显示：
 
-## 如何验收
+   ```text
+   OSLAB1 sid=2024302111239 mod97=0x1d
+   SELFTEST zero=0 min=-2147483648 max=2147483647 hex=0xffffffff empty=[]
+   SELFTEST long=[很长的一串 0123456789abcdef]
+   ```
 
-退出手动启动的 QEMU 后，终端仍位于刚才的个人内核目录。先检查预期输出文件，再回到独立检查目录的根目录：
+   第三行实际是 `0123456789abcdef` **重复 32 次**。此后画面停住是正常的。按 `Control+A`，松开后按 `x` 退出 QEMU。编译时出现 `LOAD segment with RWX permissions` 提示是已记录的链接脚本提示；不应再出现“找不到 `_entry`”。
 
-```bash
-python3 check_expect.py 2024302111239
-cd ..
-```
+3. 在同一个内核目录检查第一行的预期文件：
 
-第一条命令显示 `[ok] 形状校验通过`，说明预期文件含有正确学号、十六进制数字和末尾换行。然后运行课程验收和自检：
+   ```bash
+   python3 check_expect.py 2024302111239
+   ```
 
-```bash
-MAKEFLAGS='CC=riscv64-elf-gcc LD=riscv64-elf-ld' \
-  sh os-course-labs/tools/lab1-autograder/run.sh \
-  2024302111239-kernel 2024302111239
-python3 labs/lab1/test_lab1.py
-```
+   应看到 `[ok] 形状校验通过`。
 
-课程脚本会自动重新编译并启动 QEMU，无需手动退出。实际通过时，屏幕依次显示 `PASS:banner_match`、`PASS:idempotent`、`PASS:d_int` 和 `RESULT: 3/3`；另外还有一行 `INFO:throttle`，确认代码引用了学号节流参数。最后一条命令打印 `Lab 1 serial output: PASS`，它检查 Banner 后面的数字与长字符串。
+4. 回到仓库根目录，运行课程评分：
 
-若出现 `FAIL`，先看冒号后面的项目名。`banner_match` 对应首行文字与换行，`idempotent` 对应两次开机的输出差异，`d_int` 对应内核异常；`expect_file` 或 `expect_shape` 则指向预期输出文件。修好后重跑同一组命令，就能看到改动是否解决了问题。
+   ```bash
+   cd ..
+   MAKEFLAGS='CC=riscv64-elf-gcc LD=riscv64-elf-ld' \
+     sh os-course-labs/tools/lab1-autograder/run.sh \
+     2024302111239-kernel 2024302111239
+   ```
 
-检查结束后，先清掉这个检查目录里的编译文件，再从主仓库移除临时目录：
+   脚本会自动开机和关闭 QEMU。通过时显示三行 `PASS`，最后是 **`RESULT: 3/3`**。它检查：第一行一字不差、两次开机输出相同、运行期间没有异常。另有 `INFO:throttle` 提示，检查学号节流代码。
 
-```bash
-cd 2024302111239-kernel
-make clean
-cd /Users/slumpyfufu/Desktop/Projects/OSpracticeA
-git worktree remove ../OSpracticeA-lab1-check
-```
+5. 检查结束，清理编译文件并回到现在的 Lab 2 版本：
+
+   ```bash
+   cd 2024302111239-kernel
+   make clean
+   cd ..
+   git switch master
+   ```
+
+现场验收还会让你解释启动代码、4 KB 栈、为什么要给内核访问内存的权限，以及抽查一张 Lab 0 图。**`git switch master` 是最后一步，执行后你的日常代码就回到 Lab 2。**
 
 ## 验证记录
 
