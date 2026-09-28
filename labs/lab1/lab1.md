@@ -80,20 +80,34 @@ OSLAB1 sid=2024302111239 mod97=0x1d
 
 ## 如何启动
 
-在仓库根目录进入个人内核，运行 Makefile 的 `qemu` 目标。该目标会先编译内核，再以 QEMU virt 机器启动；本机 Homebrew 工具链的编译器和链接器需要通过命令行指定。
+现在主目录已经开发到 Lab 2。要看 Lab 1 当时的验收画面，先在 VS Code 顶部点“终端 → 新建终端”，再复制下面三行。第一行回到仓库，第二行在旁边建立一份独立的 Lab 1 检查目录，第三行进入其中的个人内核；当前 Lab 2 代码保持在原目录。
 
 ```bash
-cd 2024302111239-kernel
+cd /Users/slumpyfufu/Desktop/Projects/OSpracticeA
+git worktree add --detach ../OSpracticeA-lab1-check lab1-submit
+cd ../OSpracticeA-lab1-check/2024302111239-kernel
+```
+
+在这个终端继续运行：
+
+```bash
 make CC=riscv64-elf-gcc LD=riscv64-elf-ld qemu
 ```
 
-串口输出从 `OSLAB1 sid=2024302111239 mod97=0x1d` 开始，接着打印 `SELFTEST zero=0` 所在的数字边界行，以及 `SELFTEST long=[...]` 所在的长字符串行。输出结束后内核停在等待循环，QEMU 仍占用终端。按 `Control+A`，松开后按小写 `x` 退出。若要从干净构建开始，先在同一目录执行 `make clean`，再运行上面的启动命令。
+终端先显示几行编译命令，然后依次出现 Banner、数字自检和长字符串自检。第一行是 `OSLAB1 sid=2024302111239 mod97=0x1d`。打印完后 QEMU 仍占用终端，这是内核在等待。按 `Control+A`，松开后按小写 `x`，终端会显示 `QEMU: Terminated` 并回到命令提示符。
 
-链接阶段会提示单个加载段具有 RWX 权限，原因和本轮验收结果记录在下节。看到 Banner 和两行自检输出，说明本轮启动路径已运行到 S 态的 `kernel_main`。
+链接阶段会提示单个加载段具有 RWX 权限，原因记录在后面的“验证记录”。看到 Banner 和两行自检输出，说明本轮启动路径已运行到 S 态的 `kernel_main`。
 
 ## 如何验收
 
-在 `OSpracticeA` 根目录运行下面两条命令。第一条是课程提供的验收脚本，会重新编译内核、启动 QEMU 并检查开机输出；这里由脚本负责关闭 QEMU。`MAKEFLAGS` 把本机的 RISC-V 编译器和链接器名称传给脚本。第二条检查 Banner 后面的两行自检内容，包括数字边界和 512 个连续字符。
+退出手动启动的 QEMU 后，终端仍位于刚才的个人内核目录。先检查预期输出文件，再回到独立检查目录的根目录：
+
+```bash
+python3 check_expect.py 2024302111239
+cd ..
+```
+
+第一条命令显示 `[ok] 形状校验通过`，说明预期文件含有正确学号、十六进制数字和末尾换行。然后运行课程验收和自检：
 
 ```bash
 MAKEFLAGS='CC=riscv64-elf-gcc LD=riscv64-elf-ld' \
@@ -102,9 +116,18 @@ MAKEFLAGS='CC=riscv64-elf-gcc LD=riscv64-elf-ld' \
 python3 labs/lab1/test_lab1.py
 ```
 
-课程脚本显示 `PASS:banner_match`，表示实际开机首行与 `expect_banner.txt` 对上了；`PASS:idempotent` 表示两次开机打印的内容相同；`PASS:d_int` 表示运行期间没有记录到异常。最后看到 `RESULT: 3/3`，这三项就全部通过。`INFO:throttle` 是对学号节流代码的提示，单独列在三项结果之外。第二条命令打印 `Lab 1 serial output: PASS`，说明后两行自检也符合预期。
+课程脚本会自动重新编译并启动 QEMU，无需手动退出。实际通过时，屏幕依次显示 `PASS:banner_match`、`PASS:idempotent`、`PASS:d_int` 和 `RESULT: 3/3`；另外还有一行 `INFO:throttle`，确认代码引用了学号节流参数。最后一条命令打印 `Lab 1 serial output: PASS`，它检查 Banner 后面的数字与长字符串。
 
 若出现 `FAIL`，先看冒号后面的项目名。`banner_match` 对应首行文字与换行，`idempotent` 对应两次开机的输出差异，`d_int` 对应内核异常；`expect_file` 或 `expect_shape` 则指向预期输出文件。修好后重跑同一组命令，就能看到改动是否解决了问题。
+
+检查结束后，先清掉这个检查目录里的编译文件，再从主仓库移除临时目录：
+
+```bash
+cd 2024302111239-kernel
+make clean
+cd /Users/slumpyfufu/Desktop/Projects/OSpracticeA
+git worktree remove ../OSpracticeA-lab1-check
+```
 
 ## 验证记录
 
