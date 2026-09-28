@@ -1,0 +1,32 @@
+@startuml
+title Lab 2 用户系统调用的陷入与返回
+hide footbox
+participant "用户程序\nU 态" as User
+participant "RISC-V 硬件" as CPU
+participant "uservec / userret\n课程 trampoline.S" as Tramp
+participant "usertrap / usertrapret\n内核 trap.c" as Trap
+participant "syscall.c\n系统调用分发" as Sys
+
+User -> CPU : ecall；a7 为调用号，a0 至 a2 为参数
+CPU -> CPU : sepc = ecall 地址；scause = 8
+CPU -> Tramp : 记录特权状态，转入 S 态并跳转 stvec
+activate Tramp
+Tramp -> Tramp : sscratch 暂存用户 a0；31 个寄存器写入 trapframe
+Tramp -> Tramp : 换内核 sp 与 satp；sfence.vma
+Tramp -> Trap : 调用 usertrap
+deactivate Tramp
+activate Trap
+Trap -> Trap : stvec = kernelvec；保存 sepc；epc += 4
+Trap -> Sys : 根据 trapframe.a7 分发
+activate Sys
+Sys --> Trap : 返回值写入 trapframe.a0；未知调用返回 -1
+deactivate Sys
+Trap -> Trap : 关闭中断；stvec = uservec；准备 sepc 与 sstatus
+Trap -> Tramp : 跳转 userret，传入用户页表 satp
+deactivate Trap
+activate Tramp
+Tramp -> Tramp : 换用户 satp；恢复通用寄存器与 a0
+Tramp -> CPU : sret
+deactivate Tramp
+CPU -> User : 以 U 态从 ecall 后一条指令继续执行
+@enduml

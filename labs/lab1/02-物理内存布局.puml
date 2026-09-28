@@ -1,0 +1,20 @@
+@startuml
+!pragma layout smetana
+title Lab 1 物理地址与内核布局
+skinparam linetype ortho
+top to bottom direction
+
+rectangle "0x00001000\nQEMU 引导 ROM\n跳转到 ELF 入口" as rom
+rectangle "0x10000000\nUART0 MMIO\nTHR + 0；LSR + 5" as uart
+rectangle "RAM：0x80000000 至 0x88000000\nLab 1 satp = 0，直接使用物理地址" as ram {
+  rectangle "0x80000000\nentry.S 入口与 .text\n可执行代码" as code
+  rectangle ".rodata\n常量字符串" as rodata
+  rectangle ".data\n已初始化的全局数据" as data
+  rectangle ".bss：bss_start 至 kernel_end\nstack0：4 KB，sp = stack0_top\n未初始化的发送计数器" as bss
+  code -down-> rodata
+  rodata -down-> data
+  data -down-> bss
+}
+rom -down-> uart : 地址递增
+uart -down-> ram
+@enduml

@@ -1,8 +1,9 @@
 个人累积内核
 ============
 当前内核从 _entry 启动，先打印 Lab 1 Banner 和自检，再进入 Lab 2 的交互式
-Shell。Lab 1 验收记录见 ../labs/lab1/lab1.md，Lab 2 的实现与运行方法见
-../labs/lab2/lab2.md。
+Shell。Lab 1 设计笔记见 ../labs/lab1/lab1设计文档.md，验收操作见
+../labs/lab1/lab1验收.md；Lab 2 设计见 ../labs/lab2/lab2设计文档.md，
+验收操作见 ../labs/lab2/lab2验收.md。
 课程预置的 kernel.ld、riscv.h、memlayout.h、course_sid.h 保持原样；
 Makefile 在原有构建入口上接入 Lab 2 用户程序内嵌规则。
 

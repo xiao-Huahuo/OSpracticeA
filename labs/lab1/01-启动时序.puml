@@ -1,0 +1,37 @@
+@startuml
+title Lab 1 从上电到首行输出
+hide footbox
+participant "QEMU 引导 ROM\n0x1000" as ROM
+participant "entry.S 入口\nM 态汇编" as Entry
+participant "start()\nM 态 C 函数" as Start
+participant "kernel_main()\nS 态" as Main
+participant "UART0\n0x10000000" as UART
+
+ROM -> Entry : 跳转到 ELF 入口 0x80000000
+activate Entry
+Entry -> Entry : 关闭 M 态中断；读取 mhartid
+note right of Entry
+  非零 hart 留在 park
+  以下为 hart 0
+end note
+Entry -> Entry : mtvec = mtrap；清零 BSS
+Entry -> Entry : sp = stack0_top（4 KB 栈）
+Entry -> Start : call start
+deactivate Entry
+activate Start
+Start -> Start : mstatus.MPP = S；MIE、MPIE、SIE = 0
+Start -> Start : mepc = kernel_main
+Start -> Start : 委托异常与中断；stvec = strap
+Start -> Start : satp = 0（Bare）；sfence.vma
+Start -> Start : PMP 授予 S 态读、写、执行权限
+Start -> Main : mret：切换到 S 态，从 mepc 取指
+deactivate Start
+activate Main
+Main -> UART : kprintf → consoleputc
+note over Main,UART
+  轮询 LSR bit 5，待 THRE = 1
+  再写 THR，终端出现 OSLAB1 首行
+end note
+Main -> Main : 输出两行自检，随后 wfi 等待
+deactivate Main
+@enduml

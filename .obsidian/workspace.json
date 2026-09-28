@@ -1,0 +1,202 @@
+{
+  "main": {
+    "id": "fd6271c32bac8a8c",
+    "type": "split",
+    "children": [
+      {
+        "id": "c485e7fc263d6b0a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "7270642af36999aa",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "labs/lab1/lab1验收.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "lab1验收"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "c190abb04f26dca2",
+    "type": "split",
+    "children": [
+      {
+        "id": "36f944de09ea126b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "1eee7fd14d4efdea",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "4d528fe2b37f011b",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "723d28e5e81e3d9c",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "d065210b913406dc",
+    "type": "split",
+    "children": [
+      {
+        "id": "7618c7274e0c1187",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b37d95e3fb0473b2",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "labs/lab1/lab1验收.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "反向链接"
+            }
+          },
+          {
+            "id": "974fcc50c9e9aa76",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "labs/lab1/lab1验收.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "出链"
+            }
+          },
+          {
+            "id": "c574df3a40f424be",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "caf096529938a252",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "添加笔记属性"
+            }
+          },
+          {
+            "id": "a18c177f189f9cba",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "labs/lab1/lab1验收.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "大纲"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false,
+      "bases:新建数据库": false
+    }
+  },
+  "active": "7270642af36999aa",
+  "lastOpenFiles": [
+    "labs/lab2/01-陷入与返回.png",
+    "labs/lab1/02-物理内存布局.png",
+    "labs/lab1/01-启动时序.png",
+    "labs/lab0/03-时钟中断旅程.png",
+    "labs/lab0/02-exec后核心数据结构快照.png",
+    "labs/lab0/01-echo命令生命周期.png",
+    "labs/lab1/lab1设计文档.md",
+    "labs/lab0/lab0.md"
+  ]
+}

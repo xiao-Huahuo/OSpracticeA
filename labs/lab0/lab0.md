@@ -4,7 +4,7 @@ Lab 0 不要求写内核代码。我选了参考 xv6 中的 `echo hi`：从 Shel
 
 ## 图 1：Shell 执行 echo hi
 
-[打开时序图](./01-echo命令生命周期.puml)
+[打开时序图源码](./01-echo命令生命周期.puml)；[查看 PNG](./01-echo命令生命周期.png)
 
 先沿箭头看 `read → fork → exec → write → exit`。Shell 等输入时进入内核并睡眠；UART 收到回车后把它唤醒。Shell 创建子进程，自己在 `wait` 中等着；子进程装入 echo，向终端写出 `hi` 和换行，退出后由 Shell 回收。
 
@@ -12,7 +12,7 @@ Lab 0 不要求写内核代码。我选了参考 xv6 中的 `echo hi`：从 Shel
 
 ## 图 2：exec 刚结束的快照
 
-[打开数据结构图](./02-exec后核心数据结构快照.puml)
+[打开数据结构图源码](./02-exec后核心数据结构快照.puml)；[查看 PNG](./02-exec后核心数据结构快照.png)
 
 这张图停在 echo 即将执行第一条用户指令之前。左边是 `init ← Shell ← echo` 的父子关系。Shell 正等在 `wait`，echo 还在内核里准备返回用户态。`exec` 换掉了 echo 的程序和页表，进程号、父进程关系与打开的控制台文件仍沿用原来的值。
 
@@ -20,7 +20,7 @@ Lab 0 不要求写内核代码。我选了参考 xv6 中的 `echo hi`：从 Shel
 
 ## 图 3：时钟中断后怎样继续
 
-[打开时钟中断图](./03-时钟中断旅程.puml)
+[打开时钟中断图源码](./03-时钟中断旅程.puml)；[查看 PNG](./03-时钟中断旅程.png)
 
 用户程序被时钟打断时，CPU 先记下原来的执行位置和中断原因，跳到 `uservec`。跳板把寄存器放入 trapframe，再换成当前进程的内核栈和内核页表。内核处理时钟、安排下一次中断，让当前进程回到可运行队列；调度器选中它之后，`userret` 恢复原来的寄存器，`sret` 从刚才停下的位置继续。
 
@@ -32,4 +32,4 @@ Lab 0 不要求写内核代码。我选了参考 xv6 中的 `echo hi`：从 Shel
 
 对照源码时，图 1 从 `user/sh.c`、`user/echo.c`、`kernel/console.c` 和 `kernel/proc.c` 开始；图 2 看 `kernel/exec.c`、`kernel/vm.c`、`kernel/file.c`；图 3 看 `kernel/trap.c`、`kernel/trampoline.S` 和 `kernel/proc.c`。这些路径都相对于 `xv6-riscv/` 参考树。
 
-三份 `.puml` 可以在 VS Code 的 PlantUML 预览中打开。本次修改已用仓库配置的本地 Java 和 PlantUML 渲染成图片，核对过文字、箭头和页面布局；渲染图片属于临时检查结果，没有放进提交。
+三份 `.puml` 可以在 VS Code 的 PlantUML 预览中打开；同目录的同名 `.png` 可直接查看。图片已按现有图源渲染，文字、箭头和页面布局都经过目视检查。

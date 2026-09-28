@@ -71,9 +71,9 @@ OSpracticeA/
 │   └── support/                       # Lab 2 串口输入测试工具
 ├── labs/                             # 各实验的文档材料
 │   ├── 基础知识.md                    # 操作系统基础知识笔记
-│   ├── lab0/                         # Lab 0 流程图、分析和报告
-│   ├── lab1/                         # Lab 1 设计、QEMU 测试与报告
-│   └── lab2/                         # Lab 2 设计、交互测试与验收记录
+│   ├── lab0/                         # Lab 0 三张图的 PlantUML 源码和 PNG、分析与报告
+│   ├── lab1/                         # Lab 1 设计、验收、两张图的源码和 PNG、测试
+│   └── lab2/                         # Lab 2 设计、验收、陷入图源码和 PNG、测试
 ├── xv6-riscv/                        # 完整的 xv6 RISC-V 参考源码
 │   ├── kernel/                       # 内核源码
 │   ├── user/                         # 用户程序与用户态库
