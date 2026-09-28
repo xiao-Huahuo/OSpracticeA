@@ -1,149 +1,52 @@
 @startuml
 !pragma layout smetana
-title exec 完成后 echo 首条用户指令执行前的数据结构快照
-
-skinparam backgroundColor #FFFFFF
+title 图 2  exec 刚结束，echo 还没执行第一条指令
 skinparam shadowing false
+skinparam backgroundColor white
 skinparam linetype ortho
-skinparam classAttributeIconSize 0
-hide methods
+skinparam nodesep 18
+skinparam ranksep 22
 
-legend left
-  截面时刻：子进程已经在内核中完成 kexec，下一步通过 sret 执行 echo.main
-  PID 使用符号表示，突出各进程之间稳定的结构关系
-endlegend
-
-package "进程表 proc[NPROC]" {
-  object "init 进程" as Init {
-    state = SLEEPING 或 RUNNABLE
-    pid = P_init
-    parent = 0
-    pagetable = PT_init
-    ofile[0..2] = console
-  }
-
-  object "Shell 父进程" as Sh {
-    state = SLEEPING
-    chan = &Shell
-    pid = P_sh
-    parent = init
-    pagetable = PT_sh
-    sz = Shell 地址空间大小
-    ofile[0..2] = console
-  }
-
-  object "echo 子进程" as Echo {
-    state = RUNNING
-    pid = P_echo
-    parent = Shell
-    pagetable = PT_echo
-    sz = echo 映像末端和初始栈
-    trapframe.epc = echo 入口
-    ofile[0..2] = console
-  }
+package "① 进程表" {
+  rectangle "init\nstate：睡眠或可运行\nparent：无\npagetable：PT_init，sz：自己的大小\nofile[0..2]：控制台" as Init
+  rectangle "Shell\nstate：在 wait 中睡眠\nparent：init\npagetable：PT_sh，sz：Shell 的大小\nofile[0..2]：控制台" as Sh
+  rectangle "echo\nstate：RUNNING，准备返回用户态\nparent：Shell\npagetable：PT_echo，sz：新映像和栈\nofile[0..2]：沿用控制台\ntrapframe：TF_echo，epc 是 echo 入口" as E
+  E --> Sh : parent
+  Sh --> Init : parent
 }
 
-Sh --> Init : parent
-Echo --> Sh : parent
-
-note right of Echo
-  fork 创建这个 proc；exec 在同一个 proc 中装入新的用户地址空间。
-  P_echo 保持原值，控制台 fd 继续有效。
-end note
-
-package "echo 的 SV39 页表 PT_echo" {
-  object "L2 根页表" as L2
-  object "L1 中间页表" as L1
-  object "L0 叶子页表" as L0
-
-  package "低地址用户区" as Low {
-    object "ELF text\nVA 由程序头决定\nPTE: R-X-U" as Text
-    object "ELF rodata/data/bss\nVA 由程序头决定\nPTE: R--U 或 RW-U" as Data
-    object "guard page\n访问权限限定为 S 态\nPTE_U = 0" as Guard
-    object "初始用户栈\nsp 位于栈顶\nPTE: RW-U" as UStack
-    object "heap 起点\n初始位于 sz 附近，之后由 sbrk 扩展" as Heap
-  }
-
-  package "高地址固定映射" as High {
-    object "TRAPFRAME\n= TRAMPOLINE - PGSIZE\nPTE: RW--，S 态专用" as TF
-    object "TRAMPOLINE\n= MAXVA - PGSIZE\nPTE: R-X-，S 态专用" as Tramp
-  }
-
-  L2 --> L1 : VPN[2]
-  L1 --> L0 : VPN[1]
-  L0 --> Text : VPN[0] -> PPN
-  L0 --> Data : VPN[0] -> PPN
-  L0 --> Guard : VPN[0] -> PPN
-  L0 --> UStack : VPN[0] -> PPN
-  L0 ..> Heap : 首次增长或访问时按需建立叶子映射
-  L2 --> TF : 高地址分支
-  L2 --> Tramp : 高地址分支
+package "② echo 的页表 PT_echo" {
+  rectangle "L2 根" as L2
+  rectangle "低地址 L1" as LowL1
+  rectangle "低地址 L0" as LowL0
+  rectangle "高地址 L1" as HighL1
+  rectangle "高地址 L0" as HighL0
+  rectangle "低地址用户区\n代码和数据：VA 0 到映像末，R-X-U / RW-U\n堆：从 sz 向上，初始尚未分配\nguard：sz-2页 到 sz-1页，U=0\n用户栈：sz-1页 到 sz，RW-U" as Low
+  rectangle "高地址两页\nTRAPFRAME：MAXVA-2页 到 MAXVA-1页，RW-、U=0\n映到 TF_echo 物理页\nTRAMPOLINE：MAXVA-1页 到 MAXVA，R-X、U=0" as High
+  L2 --> LowL1
+  LowL1 --> LowL0
+  LowL0 --> Low : 低地址映射
+  L2 --> HighL1
+  HighL1 --> HighL0
+  HighL0 --> High : 固定映射
 }
 
-Echo --> L2 : pagetable
-Echo --> TF : trapframe 指向对应物理页
-
-note bottom of Guard
-  思考 1：xv6 为 guard page 保留物理映射并设置 PTE_U = 0，
-  让用户越界访问稳定地触发权限异常。
-end note
-
-note bottom of Tramp
-  思考 2：所有进程在相同虚拟地址映射同一份 trampoline 代码，
-  fork 和 exec 复用这份映射；它的执行权限专用于 S 态陷阱切换。
-end note
-
-package "标准输入输出引用链" {
-  object "Echo ofile[]" as EchoFD {
-    ofile[0] = stdin
-    ofile[1] = stdout
-    ofile[2] = stderr
-  }
-
-  object "Shell ofile[]" as ShFD {
-    ofile[0] = stdin
-    ofile[1] = stdout
-    ofile[2] = stderr
-  }
-
-  object "struct file：console" as ConsoleFile {
-    type = FD_DEVICE
-    ref = 多个 fd 和进程共同引用
-    readable = 1
-    writable = 1
-    major = CONSOLE = 1
-    ip = 控制台设备 inode
-  }
-
-  object "struct inode：console" as ConsoleInode {
-    type = T_DEVICE
-    major = CONSOLE
-    ref = 内存引用计数
-  }
-
-  object "devsw[CONSOLE]" as Devsw {
-    read = consoleread
-    write = consolewrite
-  }
-
-  object "UART 驱动" as Driver {
-    uartwrite
-    uartintr
-    UART0 = 0x10000000
-  }
+package "③ 标准输出 fd 1" {
+  rectangle "Shell.ofile[1]\necho.ofile[1]" as FD
+  rectangle "同一个 struct file\nFD_DEVICE，ref 至少 2\nmajor=CONSOLE" as File
+  rectangle "控制台 inode\nT_DEVICE" as Inode
+  rectangle "devsw[CONSOLE].write\n→ consolewrite → UART" as Device
+  FD --> File
+  File --> Inode : ip
+  File --> Device : major
 }
 
-Echo --> EchoFD : ofile
-Sh --> ShFD : ofile
-EchoFD --> ConsoleFile : fd 0 / 1 / 2
-ShFD --> ConsoleFile : fork 时 filedup，共享引用
-ConsoleFile --> ConsoleInode : ip
-ConsoleFile --> Devsw : 按 major 分派
-Devsw --> Driver : 读写控制台
+E --> L2 : pagetable
+E --> FD : ofile[1]
 
-note bottom of ConsoleFile
-  思考 3：exec 会保留文件描述符，因此 echo 的 fd 1 仍指向控制台。
-  exit 时 fileclose 减少引用计数；Shell 的引用让控制台对象继续存活。
+note bottom of E
+  想一想：exec 换了程序和用户页表，
+  echo 的 PID、parent、打开的 fd 仍是原来的。
 end note
 
 @enduml

@@ -1,91 +1,39 @@
 @startuml
-title 一次用户态时钟中断的微观旅程
-
-skinparam backgroundColor #FFFFFF
+title 图 3  用户程序被时钟打断后怎样继续
+hide footbox
 skinparam shadowing false
-skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 18
-autonumber
+skinparam backgroundColor white
 
-participant "用户进程\nU 态 / 用户栈" as User
-participant "CPU 硬件" as CPU
-participant "trampoline.S\nS 态 / 先用用户页表" as Tramp
-participant "trap.c\nS 态 / 进程内核栈" as Trap
-participant "时钟处理" as Clock
-participant "proc.c" as Proc
-participant "scheduler\nS 态 / 调度器栈" as Sched
+participant "用户程序\nU 态，用户栈" as U
+participant "CPU / uservec\n进入 S 态" as C
+participant "usertrap / 时钟处理\nS 态，进程内核栈" as K
+participant "调度器\nS 态，调度器栈" as S
 
-legend left
-  时钟中断的 scause = 0x8000000000000005
-  最高位 1 表示中断，低位 5 表示 supervisor timer interrupt
-endlegend
-
-== 1 硬件进入陷阱入口 ==
-
-User -> CPU : 正在执行普通用户指令
-CPU -> CPU : 时钟比较器到期
-CPU -> CPU : 保存当前 PC 到 sepc\n记录 scause 和 sstatus\n清除 SIE，切换到 S 态
-CPU -> Tramp : PC 跳到 stvec 指向的 uservec
-
-note over CPU, Tramp
-  此刻已经是 S 态，但仍使用用户页表和用户 sp。
-  trampoline 必须同时映射在用户页表和内核页表的同一虚拟地址。
+== 进入内核 ==
+U -> C : 正在执行一条用户指令，时钟中断到来
+C -> C : PC 存入 sepc；写 scause 和 sstatus\n关当前中断，按 stvec 跳到 uservec
+note right of C
+  此时已是 S 态，仍沿用用户页表和用户 sp。
+  scause = 0x8000000000000005。
 end note
+C -> C : sscratch 暂存 a0；寄存器存进 trapframe\n改用进程内核栈和内核页表
+C -> K : 进入 usertrap
 
-Tramp -> Tramp : sscratch 暂存 a0\n把所有用户寄存器保存到 TRAPFRAME
-Tramp -> Tramp : sp = trapframe.kernel_sp\n切到当前进程的内核栈
-Tramp -> Tramp : satp = trapframe.kernel_satp\nsfence.vma，切到内核页表
-Tramp -> Trap : jalr trapframe.kernel_trap\n进入 usertrap
+== 处理时钟并让出 CPU ==
+K -> K : stvec 改为 kernelvec；保存 sepc\ndevintr 识别时钟中断
+K -> K : CPU 0 持 tickslock 更新 ticks 并唤醒等待者\n设置下一次 stimecmp
+K -> S : yield：RUNNING → RUNNABLE\n持有 p->lock，swtch 到调度器栈
+S -> S : 选一个 RUNNABLE 进程\n可以是别人，也可以是原进程
+S --> K : 原进程再次得到 CPU，恢复它的内核栈
 
-== 2 内核确认并处理时钟中断 ==
+== 回到原来的用户指令 ==
+K -> C : prepare_return 设置 stvec、sepc 和 sstatus\n交给 userret 切换用户页表
+C -> C : 从 trapframe 恢复寄存器和用户 sp
+C -> U : sret 回到 U 态，从 sepc 继续
 
-Trap -> Trap : stvec 改为 kernelvec\n保存 sepc 到 p->trapframe->epc
-Trap -> Clock : devintr 识别 supervisor timer interrupt
-Clock -> Clock : 若 cpuid == 0：acquire(tickslock)\nticks++，wakeup(&ticks)\nrelease(tickslock)
-Clock -> CPU : w_stimecmp(r_time() + 1000000)\n安排下一次时钟中断
-Clock --> Trap : 返回 which_dev = 2
-
-note right of Clock
-  思考 1：CPU 0 统一增加全局 ticks，维持单一时间基准；
-  每个核分别设置自己的下一次 stimecmp。
-end note
-
-== 3 当前进程让出 CPU ==
-
-Trap -> Proc : which_dev == 2，因此 yield()
-Proc -> Proc : acquire(p->lock)\np->state: RUNNING -> RUNNABLE
-Proc -> Sched : sched -> swtch(&p->context, &cpu->context)\n[进程内核栈 -> 调度器栈]
-Sched -> Sched : 扫描 proc[]，寻找 RUNNABLE 进程\n选择一个进程并置为 RUNNING
-
-alt 调度器稍后再次选择原进程
-  Sched -> Proc : swtch(&cpu->context, &p->context)\n恢复原进程的内核执行现场
-else 先运行其他进程
-  Sched -> Sched : 其他进程运行、睡眠或让出 CPU
-  Sched -> Proc : 最终重新选中原进程
-end
-
-Proc -> Proc : yield 从 sched 返回\nrelease(p->lock)
-Proc --> Trap : 返回 usertrap
-
-note over Proc, Sched
-  思考 2：yield 把当前进程重新放回 RUNNABLE 集合，
-  调度器随后统一选择下一个进程，候选者也包含原进程。
-end note
-
-== 4 恢复用户现场并执行 sret ==
-
-Trap -> Trap : prepare_return：intr_off\nstvec 指回 uservec
-Trap -> Trap : 写 trapframe.kernel_satp / kernel_sp\n/kernel_trap / kernel_hartid
-Trap -> CPU : sstatus.SPP = 0\nsstatus.SPIE = 1\nsepc = trapframe.epc
-Trap --> Tramp : 返回用户页表 satp
-Tramp -> Tramp : fence.i + sfence.vma\n切换到用户页表
-Tramp -> Tramp : 从 TRAPFRAME 恢复用户寄存器\n恢复用户 sp 和 a0
-Tramp -> CPU : sret
-CPU -> User : PC = sepc，回到 U 态\n继续执行被中断程序
-
-note over Tramp, User
-  思考 3：中断由硬件触发，uservec 负责完整保存用户现场。
-  完整的寄存器快照保证程序返回后从原位置、以原状态继续执行。
+note over K,S
+  想一想：时钟中断后 sepc 保持原位置。
+  ecall 才需要把 sepc 加 4，避免重复执行请求。
 end note
 
 @enduml
