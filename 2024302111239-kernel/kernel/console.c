@@ -26,6 +26,8 @@
 static uint64 sent_bytes;
 static char input[LAB2_BUF_SIZE];
 static uint64 input_read, input_write;
+/* Only the boot hart's UART interrupt updates the visible input line. */
+static uint64 input_line_chars;
 
 void
 consoleinit(void)
@@ -63,12 +65,24 @@ uartintr(void)
 
   while (uart[UART_LSR] & UART_LSR_DR) {
     int c = uart[UART_RHR];
+    int erase;
     if (c == '\r')
       c = '\n';
+    erase = c == '\b' || c == '\x7f';
+    if (erase && input_line_chars == 0)
+      continue;
     if (input_write - input_read == LAB2_BUF_SIZE)
       continue;
     input[input_write++ % LAB2_BUF_SIZE] = c;
-    consoleputc(c);
+    if (erase) {
+      input_line_chars--;
+      consoleputc('\b');
+      consoleputc(' ');
+      consoleputc('\b');
+    } else {
+      consoleputc(c);
+      input_line_chars = c == '\n' ? 0 : input_line_chars + 1;
+    }
     if (LAB2_BUF_SEMANTICS == 1 || c == '\n')
       proc_wakeup(input);
   }

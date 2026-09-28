@@ -92,11 +92,17 @@ sys_read(void)
     if (vmaddr(p->pagetable, addr + i, 1) == 0)
       return -1;
 
+  /* Single-byte readers keep stream delivery; bulk reads finish a line. */
   while (used < count) {
-    int c = consolegetc(used == 0);
+    int c = consolegetc(1);
     char ch;
     if (c < 0)
       break;
+    if (count > 1 && (c == '\b' || c == '\x7f')) {
+      if (used > 0)
+        used--;
+      continue;
+    }
     ch = (char)c;
     if (copyout(addr + used, &ch, 1) < 0)
       return -1;

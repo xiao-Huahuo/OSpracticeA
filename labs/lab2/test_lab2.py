@@ -7,7 +7,7 @@ import re
 import select
 import subprocess
 from tempfile import TemporaryDirectory
-from time import monotonic
+from time import monotonic, sleep
 
 
 KERNEL = Path(__file__).resolve().parents[2] / "2024302111239-kernel"
@@ -41,7 +41,8 @@ def main() -> None:
             banner = (KERNEL / "expect_banner.txt").read_bytes()
             assert output.splitlines()[0] == banner.strip(), bytes(output[:80])
 
-            os.write(master, b"hi\n")
+            os.write(master, b"hix\x7f\n")
+            wait_for(b"hix\x08 \x08\r\n")
             wait_for(b"hi: user program running, pid=")
             wait_for(b"sh> ", 2)
 
@@ -55,9 +56,17 @@ def main() -> None:
 
             os.write(master, b"bufstorm\n")
             wait_for(b"sh> bufstorm\r\n")
-            for line in (b"one\n", b"two\n", b"three\n", b"four\n"):
-                os.write(master, line)
-                wait_for(line.replace(b"\n", b"\r\n"), 2)
+            for typed, line, copies in (
+                (b"onx\x7fe\n", b"one\n", 1),
+                (b"two\n", b"two\n", 2),
+                (b"three\n", b"three\n", 2),
+                (b"four\n", b"four\n", 2),
+            ):
+                for byte in typed:
+                    os.write(master, bytes([byte]))
+                    sleep(0.08)
+                wait_for(line.replace(b"\n", b"\r\n"), copies)
+            assert b"ttwwoo" not in output
             wait_for(b"BUFSTORM lines=4 bytes=19")
             wait_for(b"sh> ", 5)
 

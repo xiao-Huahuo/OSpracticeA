@@ -8,7 +8,7 @@
 |---|---|
 | Lab 0 | 三张图已按命令主线重画，中文说明与本地 PlantUML 渲染通过 |
 | Lab 1 | 启动、串口输出、格式化自检和设计记录已完成；课程评测 `3/3` |
-| Lab 2 | 用户态陷入、系统调用、串口接收和交互式 Shell 已接通；QEMU 交互测试通过 |
+| Lab 2 | 用户态陷入、系统调用、串口接收和 Shell 已接通；退格与逐字输入 `bufstorm` 通过 QEMU 测试 |
 | 最近验证 | 干净构建、`hi`／`badecall`／输入缓冲测试、时钟与 UART 中断、Lab 1 输出回归通过 |
 | 运行环境 | Apple Silicon macOS，QEMU 11.1.1，Homebrew RISC-V ELF 工具链 |
 | 下一步 | 在通过验收的 Lab 2 内核上继续 Lab 3 内存管理 |
@@ -66,7 +66,7 @@ OSpracticeA/
 │   ├── check_expect.py               # Banner 输出格式自检
 │   ├── expect_banner.txt             # Lab 1 预期 Banner
 │   ├── 我的参数.txt                   # 学号派生的各实验参数
-│   ├── user/                          # Lab 2 赠送的用户程序与基础库
+│   ├── user/                          # Lab 2 用户程序、赠送库与本地输入钩子
 │   ├── tests/                         # Lab 2 官方用户态测试
 │   └── support/                       # Lab 2 串口输入测试工具
 ├── labs/                             # 各实验的文档材料

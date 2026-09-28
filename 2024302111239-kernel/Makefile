@@ -30,6 +30,10 @@ clean:
 
 include Makefile.upgrade
 
+# Keep the gifted sh.c and ulib.c unchanged; use the optional user/common.c hook.
+user-flat/sh.bin: override LD += --wrap=gets
+user-flat/sh.bin: user/common.c
+
 UPROGS += badecall bufstorm inputcheck badptr
 kernel/userimg.S: user-flat/badecall.bin user-flat/bufstorm.bin \
                   user-flat/inputcheck.bin user-flat/badptr.bin
